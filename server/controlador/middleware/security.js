@@ -16,11 +16,12 @@ export const apiLimiter = rateLimit({
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 30,
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     status: "error",
-    message: "Demasiados intentos de autenticacion. Intenta nuevamente mas tarde."
+    message: "Demasiados intentos de autenticación. Intenta nuevamente más tarde."
   }
 });
