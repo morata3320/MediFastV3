@@ -12,6 +12,8 @@ function normalizarItems(items) {
 
 const pedidoInclude = {
   usuario: { select: { id: true, username: true, email: true, rol: { select: { nombre: true } } } },
+  cliente: { select: { id: true, nombres: true, apellidos: true, cedula: true, telefono: true, email: true } },
+  direccionCliente: { select: { id: true, ciudad: true, direccion: true, referencia: true } },
   estadoPedido: true,
   detalles: { include: { producto: { include: { categoria: true, unidadMedida: true } } } },
   pagos: { include: { metodoPago: true } }
@@ -115,4 +117,32 @@ export async function findPedidosByUser(userId) {
 }
 export async function findAllPedidos() {
   return prisma.pedido.findMany({ orderBy: { createdAt: "desc" }, include: pedidoInclude });
+}
+
+export async function updatePedidoEstado(id, estado) {
+  const pedidoId = Number(id);
+  const nombreEstado = String(estado || "").trim();
+
+  if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+    throw new Error("ID de pedido invalido.");
+  }
+  if (!nombreEstado) {
+    throw new Error("El estado del pedido es obligatorio.");
+  }
+
+  const estadoPedido = await prisma.estadoPedido.findUnique({ where: { nombre: nombreEstado } });
+  if (!estadoPedido) {
+    throw new Error("Estado de pedido no valido.");
+  }
+
+  const pedido = await prisma.pedido.findUnique({ where: { id: pedidoId } });
+  if (!pedido) {
+    throw new Error("Pedido no encontrado.");
+  }
+
+  return prisma.pedido.update({
+    where: { id: pedidoId },
+    data: { estadoPedidoId: estadoPedido.id },
+    include: pedidoInclude
+  });
 }

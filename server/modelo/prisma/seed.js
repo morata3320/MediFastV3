@@ -14,7 +14,7 @@ async function catalogos() {
   await prisma.unidadMedida.upsert({ where: { abreviatura: "Und" }, update: {}, create: { nombre: "Unidad", abreviatura: "Und" } });
   for (const nombre of ["Efectivo", "Tarjeta", "Transferencia"])
     await prisma.metodoPago.upsert({ where: { nombre }, update: {}, create: { nombre } });
-  for (const nombre of ["Pendiente", "Pagado", "Enviado", "Entregado", "Cancelado"])
+  for (const nombre of ["Pendiente", "Pagado", "En preparación", "Enviado", "Entregado", "Cancelado"])
     await prisma.estadoPedido.upsert({ where: { nombre }, update: {}, create: { nombre } });
   for (const nombre of ["ENTRADA_COMPRA", "SALIDA_VENTA", "AJUSTE_POSITIVO", "AJUSTE_NEGATIVO"])
     await prisma.tipoMovimientoInventario.upsert({ where: { nombre }, update: {}, create: { nombre } });

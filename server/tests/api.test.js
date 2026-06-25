@@ -24,6 +24,10 @@ const createPedidoMock = jest.fn(async (_userId, items, pago) => {
     pagos: [{ tarjetaUltimos4: pago.tarjeta?.slice(-4) || pago.tarjetaUltimos4 || null }]
   };
 });
+const updatePedidoEstadoMock = jest.fn(async (id, estado) => {
+  if (estado === "No existe") throw new Error("Estado de pedido no valido.");
+  return { id: Number(id), estadoPedido: { nombre: estado } };
+});
 
 jest.unstable_mockModule("../modelo/js/usuario.model.js", () => ({
   findUsuarioByEmailOrUsername: jest.fn(async (identifier) => usuarios[identifier] || null),
@@ -41,7 +45,8 @@ jest.unstable_mockModule("../modelo/js/producto.model.js", () => ({
 jest.unstable_mockModule("../modelo/js/pedido.model.js", () => ({
   createPedido: createPedidoMock,
   findPedidosByUser: jest.fn(async () => []),
-  findAllPedidos: jest.fn(async () => [])
+  findAllPedidos: jest.fn(async () => []),
+  updatePedidoEstado: updatePedidoEstadoMock
 }));
 
 const { default: app } = await import("../controlador/server.js");
@@ -126,5 +131,33 @@ describe("API MediFast RDA 3", () => {
     expect(response.status).toBe(201);
     expect(response.body.data.pagos[0].tarjetaUltimos4).toBe("1111");
     expect(createPedidoMock).toHaveBeenCalled();
+  });
+
+  test("usuario comun no puede cambiar estado de pedido", async () => {
+    const response = await request(app)
+      .patch("/api/pedidos/100/estado")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({ estado: "Pagado" });
+
+    expect(response.status).toBe(403);
+  });
+
+  test("administrador puede cambiar estado de pedido", async () => {
+    const response = await request(app)
+      .patch("/api/pedidos/100/estado")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ estado: "Pagado" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.estadoPedido.nombre).toBe("Pagado");
+  });
+
+  test("estado de pedido inexistente devuelve 400", async () => {
+    const response = await request(app)
+      .patch("/api/pedidos/100/estado")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ estado: "No existe" });
+
+    expect(response.status).toBe(400);
   });
 });

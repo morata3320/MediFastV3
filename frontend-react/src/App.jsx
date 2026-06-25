@@ -75,6 +75,7 @@ export default function App() {
         guardarProductoAdmin={c.guardarProductoAdmin}
         eliminarProductoAdmin={c.eliminarProductoAdmin}
         cambiarRolUsuario={c.cambiarRolUsuario}
+        cambiarEstadoPedido={c.cambiarEstadoPedido}
       />
 
       <Toast message={c.toast} />

@@ -216,7 +216,7 @@ export function useMediFastController() {
   }
 
   async function eliminarProductoAdmin(id) {
-    if (!requireAdmin() || !window.confirm(`Eliminar producto #${id}?`)) return;
+    if (!requireAdmin()) return;
     setIsSubmitting(true);
     try {
       await productosApi.eliminar(id);
@@ -241,12 +241,26 @@ export function useMediFastController() {
     }
   }
 
+  async function cambiarEstadoPedido(id, estado) {
+    if (!requireAdmin()) return;
+    setIsSubmitting(true);
+    try {
+      await pedidosApi.actualizarEstado(id, estado);
+      notify("Estado de pedido actualizado.");
+      await cargarAdmin();
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return {
     productosFiltrados, categorias, categoria, setCategoria, busqueda, setBusqueda, cart, totals, user,
     toast, catalogLoading, catalogError, isSubmitting, cartOpen, setCartOpen, authMode, setAuthMode,
     checkoutOpen, setCheckoutOpen, adminOpen, setAdminOpen, adminProductos, adminPedidos, adminUsuarios,
     adminRoles, agregar, cambiarCantidad, quitar: (id) => setCart((items) => removeItem(items, id)),
     loginUser, registerUser, logoutUser, iniciarCheckout, confirmarPedido, cargarAdmin,
-    guardarProductoAdmin, eliminarProductoAdmin, cambiarRolUsuario, cargarProductos
+    guardarProductoAdmin, eliminarProductoAdmin, cambiarRolUsuario, cambiarEstadoPedido, cargarProductos
   };
 }

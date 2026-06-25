@@ -3,7 +3,8 @@ import { Router } from "express";
 import {
   postPedido,
   getMisPedidos,
-  getPedidos
+  getPedidos,
+  patchPedidoEstado
 } from "../controllers/pedidos.controller.js";
 
 import { requireAuth } from "../middleware/auth.js";
@@ -25,6 +26,13 @@ router.get(
   requireAuth,
   requireRole("admin"),
   getPedidos
+);
+
+router.patch(
+  "/:id/estado",
+  requireAuth,
+  requireRole("admin"),
+  patchPedidoEstado
 );
 
 export default router;

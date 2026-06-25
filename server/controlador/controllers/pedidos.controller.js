@@ -1,7 +1,8 @@
 import {
   createPedido,
   findPedidosByUser,
-  findAllPedidos
+  findAllPedidos,
+  updatePedidoEstado
 } from "../../modelo/js/pedido.model.js";
 
 import { success, created, fail } from "../../vista/respuestas.js";
@@ -51,5 +52,21 @@ export async function getPedidos(req, res, next) {
     );
   } catch (error) {
     next(error);
+  }
+}
+
+export async function patchPedidoEstado(req, res, _next) {
+  try {
+    const pedido = await updatePedidoEstado(req.params.id, req.body?.estado);
+
+    return success(
+      res,
+      pedido,
+      "Estado de pedido actualizado correctamente"
+    );
+  } catch (error) {
+    const message = error.message || "No se pudo actualizar el estado del pedido";
+    const status = /no encontrado/i.test(message) ? 404 : 400;
+    return fail(res, message, status);
   }
 }

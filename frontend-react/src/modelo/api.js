@@ -91,7 +91,8 @@ export const productosApi = {
 export const pedidosApi = {
   crear: (items, pago, cliente, direccion) => request("/pedidos", { method: "POST", body: { items, pago, cliente, direccion } }),
   misPedidos: () => request("/pedidos/mis-pedidos"),
-  todos: () => request("/pedidos")
+  todos: () => request("/pedidos"),
+  actualizarEstado: (id, estado) => request(`/pedidos/${id}/estado`, { method: "PATCH", body: { estado } })
 };
 
 export const usuariosApi = {

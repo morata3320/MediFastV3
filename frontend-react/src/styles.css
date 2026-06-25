@@ -381,6 +381,141 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   align-items: center;
 }
 
+.product-form-card {
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+
+.form-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: .75rem;
+}
+
+.form-title-row h3,
+.editing-state {
+  margin: 0;
+}
+
+.editing-state {
+  color: #00694f;
+  font-weight: 700;
+  margin-top: .3rem;
+}
+
+.form-editing-highlight {
+  border-color: #007f5f;
+  box-shadow: 0 0 0 4px rgba(0, 127, 95, .14), 0 12px 28px rgba(0, 95, 70, .16);
+  animation: editGlow 1.2s ease;
+}
+
+.checkbox-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.checkbox-row .check {
+  justify-content: flex-start;
+  background: white;
+  border: 1px solid #d5e3dc;
+  border-radius: .55rem;
+  padding: .7rem .8rem;
+  font-weight: 700;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+
+.required-missing {
+  border-color: #b42318 !important;
+  background: #fff7f6;
+}
+
+.form-help {
+  margin: 0;
+  padding: .7rem;
+  border-radius: .5rem;
+  background: #fff3cd;
+  color: #6f4f00;
+  font-weight: 700;
+}
+
+.save-product {
+  transition: transform .18s ease, background .18s ease, opacity .18s ease;
+}
+
+.save-product:not(:disabled):hover,
+.editing-button {
+  transform: scale(1.015);
+}
+
+.orders-card {
+  max-height: 720px;
+  overflow-y: auto;
+}
+
+.order-card {
+  display: grid;
+  gap: .8rem;
+}
+
+.order-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.order-summary h4,
+.order-summary p {
+  margin: 0 0 .4rem;
+}
+
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  align-items: end;
+}
+
+.order-actions label {
+  display: grid;
+  gap: .25rem;
+  font-weight: 700;
+}
+
+.order-actions select {
+  min-width: 180px;
+  padding: .55rem;
+  border: 1px solid #b7c9c0;
+  border-radius: .45rem;
+  background: white;
+}
+
+.order-detail {
+  border-top: 1px solid #d5e3dc;
+  padding-top: .8rem;
+}
+
+.order-detail h5 {
+  margin: 0 0 .6rem;
+  font-size: 1rem;
+}
+
+.order-total {
+  text-align: right;
+  font-weight: 800;
+}
+
+@keyframes editGlow {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.01); }
+  100% { transform: scale(1); }
+}
+
 .sr-only {
   position: absolute;
   left: -9999px;
@@ -400,6 +535,11 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   }
 
   .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-row,
+  .order-summary {
     grid-template-columns: 1fr;
   }
 }
