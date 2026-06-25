@@ -1,0 +1,210 @@
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Rol {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique
+  descripcion String?
+  createdAt   DateTime  @default(now())
+  usuarios    Usuario[]
+}
+
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  rolId        Int
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  rol          Rol      @relation(fields: [rolId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cliente      Cliente?
+  pedidos      Pedido[]
+}
+
+model Cliente {
+  id         Int                @id @default(autoincrement())
+  usuarioId  Int?               @unique
+  nombres    String
+  apellidos  String
+  cedula     String?            @unique
+  telefono   String?
+  email      String
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  usuario    Usuario?           @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  direcciones DireccionCliente[]
+  pedidos    Pedido[]
+}
+
+model DireccionCliente {
+  id         Int      @id @default(autoincrement())
+  clienteId  Int
+  ciudad     String
+  direccion  String
+  referencia String?
+  principal  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  cliente    Cliente  @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pedidos    Pedido[]
+}
+
+model Categoria {
+  id          Int        @id @default(autoincrement())
+  nombre      String     @unique
+  descripcion String?
+  activo      Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  productos   Producto[]
+}
+
+model UnidadMedida {
+  id         Int        @id @default(autoincrement())
+  nombre     String     @unique
+  abreviatura String    @unique
+  productos  Producto[]
+}
+
+model Producto {
+  id              Int                    @id @default(autoincrement())
+  categoriaId     Int
+  unidadMedidaId  Int
+  nombre          String
+  descripcion     String
+  precioVenta     Float
+  precioCompra    Float                  @default(0)
+  stockActual     Int                    @default(0)
+  stockMinimo     Int                    @default(5)
+  imagen          String?
+  requiereReceta  Boolean                @default(false)
+  laboratorio     String?
+  principioActivo String?
+  oferta          Boolean                @default(false)
+  activo          Boolean                @default(true)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  categoria       Categoria              @relation(fields: [categoriaId], references: [id])
+  unidadMedida    UnidadMedida           @relation(fields: [unidadMedidaId], references: [id])
+  detallesPedido  PedidoDetalle[]
+  detallesCompra  CompraDetalle[]
+  movimientos     MovimientoInventario[]
+}
+
+model Proveedor {
+  id         Int      @id @default(autoincrement())
+  nombre     String
+  rucCedula  String?  @unique
+  telefono   String?
+  email      String?
+  direccion  String?
+  activo     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  compras    Compra[]
+}
+
+model Compra {
+  id          Int             @id @default(autoincrement())
+  proveedorId Int
+  fecha       DateTime        @default(now())
+  subtotal    Float
+  iva         Float           @default(0)
+  total       Float
+  estado      String          @default("Registrada")
+  createdAt   DateTime        @default(now())
+  proveedor   Proveedor       @relation(fields: [proveedorId], references: [id])
+  detalles    CompraDetalle[]
+}
+
+model CompraDetalle {
+  id            Int      @id @default(autoincrement())
+  compraId      Int
+  productoId    Int
+  cantidad      Int
+  costoUnitario Float
+  subtotal      Float
+  compra        Compra   @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  producto      Producto @relation(fields: [productoId], references: [id])
+}
+
+model TipoMovimientoInventario {
+  id          Int                    @id @default(autoincrement())
+  nombre      String                 @unique
+  movimientos MovimientoInventario[]
+}
+
+model MovimientoInventario {
+  id                Int                       @id @default(autoincrement())
+  productoId        Int
+  tipoMovimientoId  Int
+  cantidad          Int
+  stockAnterior     Int
+  stockNuevo        Int
+  motivo            String?
+  referencia        String?
+  createdAt         DateTime                  @default(now())
+  producto          Producto                  @relation(fields: [productoId], references: [id])
+  tipoMovimiento    TipoMovimientoInventario @relation(fields: [tipoMovimientoId], references: [id])
+}
+
+model EstadoPedido {
+  id       Int      @id @default(autoincrement())
+  nombre   String   @unique
+  pedidos  Pedido[]
+}
+
+model MetodoPago {
+  id      Int    @id @default(autoincrement())
+  nombre  String @unique
+  pagos   Pago[]
+}
+
+model Pedido {
+  id                  Int               @id @default(autoincrement())
+  usuarioId           Int
+  clienteId           Int?
+  direccionClienteId  Int?
+  estadoPedidoId      Int
+  subtotal            Float
+  envio               Float             @default(0)
+  iva                 Float              @default(0)
+  total               Float
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  usuario             Usuario           @relation(fields: [usuarioId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cliente             Cliente?          @relation(fields: [clienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  direccionCliente    DireccionCliente? @relation(fields: [direccionClienteId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  estadoPedido        EstadoPedido      @relation(fields: [estadoPedidoId], references: [id])
+  detalles            PedidoDetalle[]
+  pagos               Pago[]
+}
+
+model PedidoDetalle {
+  id             Int      @id @default(autoincrement())
+  pedidoId       Int
+  productoId     Int
+  cantidad       Int
+  precioUnitario Float
+  subtotal       Float
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  producto       Producto @relation(fields: [productoId], references: [id])
+}
+
+model Pago {
+  id               Int         @id @default(autoincrement())
+  pedidoId         Int
+  metodoPagoId     Int
+  monto            Float
+  comprobante      String?
+  tarjetaUltimos4  String?
+  estado           String      @default("Pendiente")
+  createdAt        DateTime    @default(now())
+  pedido           Pedido      @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  metodoPago       MetodoPago  @relation(fields: [metodoPagoId], references: [id])
+}

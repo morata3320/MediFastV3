@@ -1,0 +1,316 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="MediFast, farmacia online con catalogo de productos y carrito de compras." />
+  <title>MediFast | Farmacia Online</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="icon" href="assets/placeholder.svg" />
+</head>
+
+<body>
+  <a href="#contenido" class="skip-link">Saltar al contenido principal</a>
+
+  <!-- Encabezado -->
+  <header class="site-header">
+    <div class="topbar">
+      <span>Atencion en linea</span>
+      <span>Entregas en Ecuador</span>
+    </div>
+
+    <div class="header-main">
+      <a href="index.html" class="logo" aria-label="MediFast inicio">
+        <span class="logo-mark" aria-hidden="true">M</span>
+        <span>
+          <strong>MediFast</strong>
+          <small>Farmacia online</small>
+        </span>
+      </a>
+
+      <form id="search-form" class="search-form" role="search" aria-label="Buscar productos">
+        <label for="search-input" class="visually-hidden">Buscar producto</label>
+        <input
+          type="search"
+          id="search-input"
+          name="q"
+          placeholder="Buscar producto"
+          autocomplete="off"
+          aria-label="Buscar producto"
+        />
+        <button type="submit">Buscar</button>
+      </form>
+
+      <button
+        id="btn-abrir-carrito"
+        class="cart-btn"
+        type="button"
+        aria-label="Abrir carrito"
+        aria-controls="cart-sidebar"
+        aria-expanded="false"
+      >
+        Carrito
+        <span id="cart-badge" class="cart-badge" style="display: none;">0</span>
+      </button>
+    </div>
+
+    <nav class="main-nav" aria-label="Categorias principales">
+      <ul>
+        <li><a href="#catalogo" class="active" aria-current="page" data-cat="Todos">Todo</a></li>
+        <li><a href="#catalogo" data-cat="Analgesicos">Medicamentos</a></li>
+        <li><a href="#catalogo" data-cat="Vitaminas">Vitaminas</a></li>
+        <li><a href="#catalogo" data-cat="Cuidado Personal">Cuidado personal</a></li>
+        <li><a href="#catalogo" data-cat="Dispositivos">Dispositivos</a></li>
+        <li><a href="#contacto">Contacto</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Inicio -->
+  <main id="contenido">
+    <section class="hero" aria-labelledby="titulo-principal">
+      <h1 id="titulo-principal">Farmacia online para productos de salud</h1>
+      <p>
+        Compra medicamentos, vitaminas, productos de cuidado personal y dispositivos medicos desde un catalogo disponible en linea.
+      </p>
+      <a href="#catalogo" class="hero-link">Ver catalogo</a>
+    </section>
+
+    <!-- Productos -->
+    <section id="catalogo" class="section" aria-labelledby="titulo-catalogo">
+      <h2 id="titulo-catalogo">Catalogo de productos</h2>
+
+      <div
+        id="cat-filter"
+        class="cat-filter"
+        role="group"
+        aria-label="Filtrar productos por categoria"
+      ></div>
+
+      <div
+        id="productos-grid"
+        class="products-grid"
+        aria-label="Lista de productos"
+        aria-live="polite"
+        aria-busy="true"
+      ></div>
+    </section>
+
+    <!-- Contacto -->
+    <section id="contacto" class="section" aria-labelledby="titulo-contacto">
+      <h2 id="titulo-contacto">Contacto</h2>
+
+      <div class="contact-box">
+        <p>Correo: medifast@gmail.com</p>
+        <p>Ciudad: Quito, Ecuador</p>
+      </div>
+    </section>
+
+    <!-- Beneficios -->
+    <section class="benefits" aria-label="Beneficios de compra">
+      <span>Catalogo disponible</span>
+      <span>Carrito guardado</span>
+      <span>Compra validada</span>
+      <span>Entrega a domicilio</span>
+    </section>
+  </main>
+
+  <!-- Pie de pagina -->
+  <footer>
+    <p><strong>MediFast</strong> - Farmacia online</p>
+    <p>© 2026 MediFast. Todos los derechos reservados.</p>
+  </footer>
+
+  <!-- Carrito -->
+  <div id="cart-overlay" class="overlay" aria-hidden="true"></div>
+
+  <aside
+    id="cart-sidebar"
+    class="cart-sidebar"
+    aria-label="Carrito de compras"
+    aria-hidden="true"
+  >
+    <div class="cart-header">
+      <h2>Mi carrito</h2>
+      <button id="btn-cerrar-carrito" type="button" aria-label="Cerrar carrito">Cerrar</button>
+    </div>
+
+    <div id="cart-items" class="cart-items" aria-live="polite"></div>
+
+    <div class="cart-footer">
+      <p><span>Subtotal:</span> <strong id="cart-subt">$0.00</strong></p>
+      <p><span>Envio:</span> <strong id="cart-envio">$0.00</strong></p>
+      <p><span>Total:</span> <strong id="cart-total">$0.00</strong></p>
+
+      <button id="btn-checkout" type="button" class="primary-btn">Finalizar compra</button>
+      <button id="btn-vaciar" type="button" class="text-btn">Vaciar carrito</button>
+    </div>
+  </aside>
+
+  <!-- Compra -->
+  <div
+    id="modal-overlay"
+    class="modal-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-titulo"
+    aria-hidden="true"
+  >
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-titulo">Finalizar compra</h2>
+        <button class="modal-close" type="button" aria-label="Cerrar formulario">Cerrar</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="resumen-orden" aria-live="polite"></div>
+
+        <form id="form-checkout" novalidate aria-label="Formulario de compra">
+          <h3>Datos de entrega</h3>
+
+          <div class="form-group">
+            <label for="f-nombre">Nombre completo</label>
+            <input
+              type="text"
+              id="f-nombre"
+              autocomplete="name"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="f-nombre-err"
+            />
+            <span id="f-nombre-err" class="field-err" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="f-email">Correo</label>
+            <input
+              type="email"
+              id="f-email"
+              autocomplete="email"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="f-email-err"
+            />
+            <span id="f-email-err" class="field-err" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="f-telefono">Telefono</label>
+            <input
+              type="tel"
+              id="f-telefono"
+              autocomplete="tel"
+              inputmode="tel"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="f-telefono-err"
+            />
+            <span id="f-telefono-err" class="field-err" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="f-cedula">Cedula</label>
+            <input
+              type="text"
+              id="f-cedula"
+              maxlength="10"
+              inputmode="numeric"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="f-cedula-err"
+            />
+            <span id="f-cedula-err" class="field-err" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="f-direccion">Direccion</label>
+            <input
+              type="text"
+              id="f-direccion"
+              autocomplete="street-address"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="f-direccion-err"
+            />
+            <span id="f-direccion-err" class="field-err" role="alert"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="f-ciudad">Ciudad</label>
+            <input
+              type="text"
+              id="f-ciudad"
+              autocomplete="address-level2"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="f-ciudad-err"
+            />
+            <span id="f-ciudad-err" class="field-err" role="alert"></span>
+          </div>
+
+          <h3>Datos de pago</h3>
+
+          <div class="form-group">
+            <label for="f-tarjeta">Numero de tarjeta</label>
+            <input
+              type="text"
+              id="f-tarjeta"
+              maxlength="16"
+              inputmode="numeric"
+              autocomplete="cc-number"
+              aria-required="true"
+              aria-invalid="false"
+              aria-describedby="f-tarjeta-err"
+            />
+            <span id="f-tarjeta-err" class="field-err" role="alert"></span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-vencimiento">Vencimiento</label>
+              <input
+                type="text"
+                id="f-vencimiento"
+                placeholder="MM/AA"
+                maxlength="5"
+                autocomplete="cc-exp"
+                aria-required="true"
+                aria-invalid="false"
+                aria-describedby="f-vencimiento-err"
+              />
+              <span id="f-vencimiento-err" class="field-err" role="alert"></span>
+            </div>
+
+            <div class="form-group">
+              <label for="f-cvv">CVV</label>
+              <input
+                type="text"
+                id="f-cvv"
+                maxlength="4"
+                inputmode="numeric"
+                autocomplete="cc-csc"
+                aria-required="true"
+                aria-invalid="false"
+                aria-describedby="f-cvv-err"
+              />
+              <span id="f-cvv-err" class="field-err" role="alert"></span>
+            </div>
+          </div>
+
+          <button type="submit" class="primary-btn">Confirmar pedido</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div
+    id="toast-container"
+    class="toast-container"
+    aria-live="assertive"
+    aria-atomic="true"
+  ></div>
+
+  <script type="module" src="../controlador/js/app.js"></script>
+</body>
+</html>

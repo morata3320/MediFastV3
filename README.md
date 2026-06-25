@@ -1,175 +1,169 @@
-# 💊 MediFast Farmacia — Carrito de Compras v2.0
+# MediFastV3 — RDA 3
 
-> **Reto 1** · Integración HTML5 · CSS3 · JavaScript ES6+ · Accesibilidad Web  
-> Metodología: **Scrumban** | CI/CD con GitHub Actions
+MediFastV3 es una farmacia online construida como aplicación cliente-servidor. El frontend final es React + Vite y consume una API REST en Node.js/Express. La solución incluye autenticación JWT, roles, catálogo, carrito, checkout, pagos, control de stock e inventario.
 
----
+## Tecnologías
 
-## 📋 Descripción
+- Frontend: React 19, Vite, CSS propio, ESLint y Vitest.
+- Backend: Node.js, Express, Prisma ORM, Jest, Supertest y ESLint.
+- Base de datos: SQL Server.
+- Seguridad: JWT, bcrypt, Helmet, CORS restringido, rate limiting, express-validator y sanitización XSS.
 
-**MediFast** es un e-commerce de farmacia construido como ejercicio académico integral. Simula una tienda en línea real con 30 productos farmacéuticos reales, carrito funcional, checkout validado con regex, y persistencia de datos mediante 4 mecanismos de almacenamiento web.
+## Arquitectura MVC
 
----
+### Frontend React
 
-## 🗂️ Estructura de Carpetas
+`frontend-react/src/` conserva separación MVC:
 
+- `modelo/`: API centralizada, sesión, carrito y validaciones de checkout.
+- `vista/`: componentes visuales de catálogo, carrito, autenticación, checkout y administración.
+- `controlador/`: hook `useMediFastController`, que coordina estado, reglas de negocio de interfaz y llamadas al modelo.
+
+### Backend
+
+`server/` implementa MVC:
+
+- `modelo/js/`: acceso a Prisma y operaciones de usuarios, productos y pedidos.
+- `vista/`: formato consistente de respuestas HTTP.
+- `controlador/controllers/`: casos de uso de autenticación, productos, pedidos, usuarios y roles.
+- `controlador/routes/` y `middleware/`: rutas, autorización, validación, seguridad y errores.
+
+## Base de datos
+
+SQL Server se accede exclusivamente mediante Prisma. El modelo incluye `Rol`, `Usuario`, `Cliente`, `DireccionCliente`, `Categoria`, `UnidadMedida`, `Producto`, `TipoMovimientoInventario`, `MovimientoInventario`, `Proveedor`, `Compra`, `CompraDetalle`, `EstadoPedido`, `MetodoPago`, `Pedido`, `PedidoDetalle` y `Pago`.
+
+`Usuario` se relaciona con `Rol` mediante `rolId`. No se usan enums Prisma para mantener compatibilidad con SQL Server. La API conserva los aliases `precio`/`stock` además de `precioVenta`/`stockActual` para no romper el frontend.
+
+## Funcionalidades
+
+- Registro, login, JWT y roles `admin` / `user`.
+- CRUD de productos protegido para administradores.
+- Catálogo con búsqueda, categorías, oferta, receta, stock bajo y sin stock.
+- Carrito persistente en `localStorage`, respetando la cantidad disponible.
+- Checkout con cliente, dirección y pagos por efectivo, tarjeta o transferencia.
+- La tarjeta no se persiste: el backend guarda únicamente `tarjetaUltimos4`.
+- Pedido transaccional: crea detalles, valida y descuenta stock, crea pago y registra `SALIDA_VENTA` en inventario.
+
+## Seguridad y OWASP
+
+- **Broken Access Control:** middleware JWT y `requireRole` protegen rutas privadas y administrativas; el frontend también oculta acciones administrativas a usuarios comunes.
+- **Authentication Failures:** contraseñas con bcrypt, JWT con expiración y límite de intentos en login/registro.
+- **Injection:** Prisma parametriza consultas; `express-validator` y sanitización XSS validan entradas.
+- **Security Misconfiguration:** Helmet, CORS por `CORS_ORIGIN`, manejo de errores sin stack en producción, `.env` ignorado por Git.
+- **Cryptographic Failures:** secretos en variables de entorno y ninguna tarjeta completa almacenada.
+
+## Instalación local
+
+### 1. Base de datos y backend
+
+Copie `server/.env.example` como `server/.env` y reemplace los marcadores de SQL Server y JWT. No suba este archivo al repositorio.
+
+```powershell
+cd C:\Users\NW\Desktop\MediFastV3\server
+npm install
+npm run prisma:generate
+npx prisma migrate deploy --schema=modelo/prisma/schema.prisma
+npm run seed
+npm run lint
+npm test
+npm run dev
 ```
-MediFast/
-├── index.html              ← Página principal (HTML5 semántico)
-├── README.md               ← Este archivo
-│
-├── assets/
-│   └── styles.css          ← CSS3 mobile-first (variables, Flex, Grid)
-│
-├── data/
-│   └── productos.json      ← 30 productos farmacéuticos reales
-│
-└── js/
-    ├── app.js              ← Orquestador: eventos, validaciones, ARIA
-    ├── cart.js             ← Carrito: localStorage + sessionStorage + cookies
-    ├── repo.js             ← Datos: fetch + IndexedDB
-    └── view.js             ← Componentes HTML reutilizables
+
+La API queda disponible en `http://localhost:3000` y Prisma Studio se abre con:
+
+```powershell
+npm run prisma:studio
 ```
 
----
+### 2. Frontend React
 
-## 🛠️ Tecnologías
+En otra terminal:
 
-| Tecnología | Uso en el proyecto |
-|---|---|
-| HTML5 semántico | `<header>`, `<nav>`, `<main>`, `<footer>`, `<article>`, `<aside>`, `<section>` |
-| CSS3 | Variables (`--color-primary`), Flexbox, CSS Grid, `@media` queries, animaciones |
-| JavaScript ES6+ | Módulos (`import/export`), `async/await`, arrow functions, template literals, destructuring |
-| `fetch()` API | Carga de `productos.json` sin servidor dinámico |
-| `localStorage` | Persistencia del carrito entre sesiones |
-| `sessionStorage` | Estado de la sesión activa (inicio, página actual) |
-| `IndexedDB` | Caché del catálogo de productos (API `IDBOpenRequest`) |
-| Cookies | Fecha/hora de última compra (expiración 30 días) |
-| ARIA | `aria-label`, `aria-invalid`, `aria-describedby`, `aria-live`, `aria-modal`, `role` |
-| Google Fonts | Playfair Display + DM Sans |
+```powershell
+cd C:\Users\NW\Desktop\MediFastV3\frontend-react
+npm install
+npm run lint
+npm test
+npm run build
+npm run dev
+```
 
----
+El frontend queda disponible en `http://localhost:5173`.
 
-## ✅ Cumplimiento de la Rúbrica
+Opcionalmente cree `frontend-react/.env`:
 
-### HTML5 semántico y estructura accesible ✓ (10/10)
-- Todas las etiquetas semánticas: `header`, `nav`, `main`, `footer`, `section`, `article`, `aside`
-- Skip link para navegación por teclado
-- `aria-label` en todos los elementos interactivos
-- Jerarquía de encabezados correcta (h1 → h2 → h3)
+```env
+VITE_API_URL=http://localhost:3000
+```
 
-### CSS3 Responsive Design ✓ (10/10)
-- Mobile-first: base estilos para móvil, luego `@media(min-width:600px)` y `@media(min-width:960px)`
-- Grid CSS adaptable: 2 cols (móvil) → 3 cols (tablet) → 4 cols (desktop)
-- Tres breakpoints: 360px, 600px, 960px
-- Sin errores visuales en ningún tamaño
+## Variables de entorno
 
-### Componentes reutilizables y ARIA ✓ (10/10)
-- `tarjetaProducto()`, `itemCarrito()`, `resumenOrden()` en `view.js`
-- Todos los roles ARIA presentes: `role="list"`, `role="dialog"`, `role="alert"`, `role="search"`
-- Navegación por teclado completa con `:focus-visible`
+Consulte [server/.env.example](server/.env.example). Las variables requeridas son:
 
-### Validaciones avanzadas con regex ✓ (10/10)
-- 9 campos validados con regex específicas (nombre, email, teléfono EC, cédula, dirección, ciudad, tarjeta, CVV, vencimiento)
-- `aria-invalid="true"` en campos con error
-- `aria-describedby` apuntando al elemento de error
-- Focus automático en el primer campo inválido
-- Validación en tiempo real al escribir y al salir del campo
+| Variable | Uso |
+| --- | --- |
+| `PORT` | Puerto de Express. |
+| `NODE_ENV` | Entorno (`development`, `test` o `production`). |
+| `CORS_ORIGIN` | Origen permitido para React. |
+| `DATABASE_URL` | Conexión de Prisma a SQL Server. |
+| `JWT_SECRET` | Secreto de firma JWT; debe cambiarse en producción. |
+| `JWT_EXPIRES_IN` | Vigencia del token. |
 
-### Datos estáticos JSON ✓ (10/10)
-- 30 productos en `productos.json` con laboratorio, principio activo, precio original/oferta, stock
-- Carga con `fetch()`, parseo y renderizado correcto
-- Caché en IndexedDB: segunda carga instantánea desde DB local
+## Usuarios de prueba
 
-### Carrito de compras funcional ✓ (15/15)
-- Agregar, eliminar, aumentar/disminuir cantidad con botones +/−
-- Elimina automáticamente cuando cantidad llega a 0
-- Subtotal y total calculados dinámicamente
-- Envío gratis ≥ $20, $2.50 en pedidos menores
-- Carrito persiste al recargar (localStorage)
-- Badge con contador de productos
-- Sincronización entre pestañas (evento `storage`)
+Solo para desarrollo y demostración tras ejecutar el seed:
 
-### Persistencia (4 mecanismos) ✓ (15/15)
-| Mecanismo | Datos almacenados | Duración |
-|---|---|---|
-| `localStorage` | Carrito + marca de tiempo | Permanente |
-| `sessionStorage` | Inicio sesión + página actual | Sesión |
-| `IndexedDB` | Catálogo de 30 productos + log de eventos | Permanente |
-| Cookie | Fecha/hora de última compra | 30 días |
+| Rol | Usuario | Contraseña |
+| --- | --- | --- |
+| Administrador | `admin` | `Admin123!` |
+| Cliente | `user` | `User123!` |
 
-### Accesibilidad integral POUR ✓ (7/7)
-- **Perceptible**: textos alt en imágenes, contraste verde #005538 sobre blanco (ratio >7:1)
-- **Operable**: navegación por teclado, `:focus-visible` verde, skip link
-- **Comprensible**: mensajes de error claros, labels en todos los campos
-- **Robusto**: ARIA válido, HTML semántico, sin errores de consola
+No use estas credenciales en producción.
 
-### Organización y modularidad ✓ (8/8)
-- 4 módulos ES6 con responsabilidades separadas (MVC-like)
-- Comentarios JSDoc en todas las funciones públicas
-- Sin dependencias externas ni bundlers
+## Endpoints principales
 
-### Documentación ✓ (5/5)
-- README.md completo con instrucciones, tecnologías y rubrica
-- Comentarios en todo el código
+| Método | Endpoint | Acceso |
+| --- | --- | --- |
+| POST | `/api/auth/register` | Público |
+| POST | `/api/auth/login` | Público |
+| GET | `/api/productos` | Público |
+| GET | `/api/productos/:id` | Público |
+| POST / PUT / DELETE | `/api/productos` | Admin |
+| POST | `/api/pedidos` | Usuario autenticado |
+| GET | `/api/pedidos/mis-pedidos` | Usuario autenticado |
+| GET | `/api/pedidos` | Admin |
+| GET | `/api/usuarios` | Admin |
+| PUT | `/api/usuarios/:id/rol` | Admin |
+| GET | `/api/roles` | Admin |
 
----
+## Pruebas y calidad
 
-## 🚀 Instrucciones de Uso
+- Backend: 11 pruebas Jest/Supertest para login, autorización, validación, stock, pedido, pago e inventario.
+- Frontend: 7 pruebas Vitest para carrito, validaciones de checkout y sesión en `localStorage`.
+- Verificación realizada: lint backend y frontend sin errores; build React exitoso.
 
-### Visual Studio Code (recomendado)
-1. Abre la carpeta `MediFast/` en VS Code.
-2. Instala la extensión **Live Server** (Ritwick Dey).
-3. Clic derecho en `index.html` → **Open with Live Server**.
-4. El sitio abrirá en `http://127.0.0.1:5500`.
+## Estructura final recomendada
 
-> ⚠️ **Importante**: No abras `index.html` directamente (doble clic). Los módulos ES6 y `fetch()` requieren un servidor HTTP. Live Server lo soluciona con un clic.
+```text
+MediFastV3/
+├── server/              # API Express, Prisma y pruebas backend
+├── frontend-react/      # Frontend final React + Vite
+├── docs/                # Evidencias y guía de defensa
+├── README.md
+├── .gitignore
+└── server/.env.example
+```
 
-### Neocities
-1. Crea cuenta en [neocities.org](https://neocities.org).
-2. Sube todos los archivos manteniendo la estructura de carpetas.
-3. Visita `https://tuusuario.neocities.org`.
+`frontend/` se conserva como versión histórica. Para la entrega final utilice `frontend-react/` o renómbrelo a `frontend/` conservando su contenido React.
 
----
+## Despliegue
 
-## 🔍 Observaciones Técnicas
+- Frontend: Vercel o Netlify. Configure `VITE_API_URL` con la URL pública del backend.
+- Backend: Render. Configure `NODE_ENV=production`, `CORS_ORIGIN`, `DATABASE_URL`, `JWT_SECRET` y `JWT_EXPIRES_IN`.
+- Base de datos: SQL Server local no es accesible desde la nube. Para producción se requiere una instancia SQL Server accesible públicamente de forma segura o mediante red privada, y actualizar `DATABASE_URL`.
 
-### Accesibilidad
-- El modal usa `aria-modal="true"` y trampa de foco para usuarios de lectores de pantalla.
-- El carrito sidebar usa `aria-hidden` para ocultarse completamente de las tecnologías asistivas cuando está cerrado.
-- Los toasts tienen `role="alert"` para que se anuncien automáticamente.
-- `prefers-reduced-motion` deshabilita todas las animaciones para usuarios sensibles.
+Mientras no exista esa base accesible, el despliegue soportado es local: backend en `localhost:3000`, frontend en `localhost:5173` y SQL Server local.
 
-### Persistencia
-- IndexedDB actúa como caché de primer nivel: después de la primera visita, el catálogo se carga instantáneamente desde la base de datos local sin hacer una petición de red.
-- El evento `window.storage` sincroniza el carrito entre múltiples pestañas abiertas simultáneamente.
-- La cookie de última compra se establece solo cuando el usuario confirma un pedido exitosamente.
+## Evidencias y defensa
 
-### Módulos ES6
-- No se necesita npm, Webpack ni ningún bundler.
-- Compatible con todos los navegadores modernos (Chrome, Firefox, Safari, Edge).
-- Cada módulo exporta solo lo necesario (tree-shaking ready).
-
----
-
-## 📊 Metodología: Scrumban
-
-El proyecto fue desarrollado bajo la metodología **Scrumban**, combinando:
-- **Sprints** de Scrum para organizar las 6 semanas académicas.
-- **Tablero Kanban** (To Do → In Progress → Review → Done) para el flujo diario.
-- **WIP limits** (máx. 2 tareas en progreso simultáneamente).
-
-Ver documento `Documento_Scrumban_MediFast.docx` para el detalle completo.
-
----
-
-## 🔄 CI/CD
-
-El proyecto incluye un pipeline de GitHub Actions (`.github/workflows/deploy.yml`) que:
-1. Valida el HTML con Nu HTML Checker.
-2. Ejecuta tests de accesibilidad con axe-core.
-3. Despliega automáticamente a Neocities al hacer push a `main`.
-
----
-
-*MediFast Farmacia © 2026 – Proyecto académico de Desarrollo Web Frontend*
+Consulte [EVIDENCIAS_RDA3.md](docs/EVIDENCIAS_RDA3.md) para las capturas y [GUIA_DEFENSA_RDA3.md](docs/GUIA_DEFENSA_RDA3.md) para la explicación técnica.
