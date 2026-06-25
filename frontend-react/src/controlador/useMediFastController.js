@@ -200,7 +200,7 @@ export function useMediFastController() {
   }
 
   async function guardarProductoAdmin(producto) {
-    if (!requireAdmin()) return;
+    if (!requireAdmin()) return false;
     setIsSubmitting(true);
     try {
       if (producto.id) await productosApi.actualizar(producto.id, producto);
@@ -208,8 +208,10 @@ export function useMediFastController() {
       await cargarProductos();
       await cargarAdmin();
       notify(producto.id ? "Producto actualizado." : "Producto creado.");
+      return true;
     } catch (error) {
       handleApiError(error);
+      return false;
     } finally {
       setIsSubmitting(false);
     }

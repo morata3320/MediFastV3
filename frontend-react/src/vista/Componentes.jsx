@@ -7,6 +7,20 @@ function imgSrc(imagen) {
 }
 const stockOf = (producto) => Number(producto.stockActual ?? producto.stock ?? 0);
 const priceOf = (producto) => Number(producto.precio ?? producto.precioVenta ?? 0);
+const requiredProductFields = ["nombre", "categoria", "precio", "stock", "descripcion"];
+
+function decimalValue(value) {
+  if (typeof value === "number") return value;
+  return Number(String(value ?? "").trim().replace(",", "."));
+}
+
+function productFieldInvalid(form, field) {
+  const value = form[field];
+  if (requiredProductFields.includes(field) && String(value ?? "").trim() === "") return true;
+  if (field === "precio") return Number.isNaN(decimalValue(value)) || decimalValue(value) < 0;
+  if (field === "stock") return !Number.isInteger(Number(value)) || Number(value) < 0;
+  return false;
+}
 
 export function Header({ user, busqueda, setBusqueda, cart, setCartOpen, setAuthMode, logoutUser, cargarAdmin }) {
   const cantidad = cart.reduce((total, item) => total + item.cantidad, 0);
@@ -53,6 +67,8 @@ export function AdminPanel({ open, setAdminOpen, productos, pedidos, usuarios, r
   const empty = { nombre: "", categoria: "", precio: "", stock: "", descripcion: "", imagen: "assets/placeholder.svg", laboratorio: "", requiereReceta: false, oferta: false };
   const estadosPedido = ["Pendiente", "Pagado", "En preparación", "Enviado", "Entregado", "Cancelado"];
   const [form, setForm] = useState(empty);
+  const [touched, setTouched] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   const [highlight, setHighlight] = useState(false);
   const [detalleAbierto, setDetalleAbierto] = useState(null);
   const formRef = useRef(null);
@@ -60,17 +76,34 @@ export function AdminPanel({ open, setAdminOpen, productos, pedidos, usuarios, r
 
   if (!open) return null;
 
-  const requiredFields = ["nombre", "categoria", "precio", "stock", "descripcion"];
-  const missingFields = requiredFields.filter((field) => String(form[field] ?? "").trim() === "");
-  const canSave = missingFields.length === 0;
+  const invalidFields = requiredProductFields.filter((field) => productFieldInvalid(form, field));
+  const canSave = invalidFields.length === 0;
   const isEditing = Boolean(form.id);
 
   function updateField(field, value) {
     setForm({ ...form, [field]: value });
   }
 
+  function markTouched(field) {
+    setTouched((current) => ({ ...current, [field]: true }));
+  }
+
+  function showFieldError(field) {
+    return productFieldInvalid(form, field) && (submitted || touched[field]);
+  }
+
+  function fieldMessage(field) {
+    if (["precio", "stock"].includes(field) && String(form[field] ?? "").trim() !== "") {
+      return field === "precio" ? "Ingrese un precio válido." : "Ingrese un stock entero válido.";
+    }
+    return "Campo obligatorio.";
+  }
+
   function editar(producto) {
-    setForm({ id: producto.id, nombre: producto.nombre || "", categoria: producto.categoria || "", precio: producto.precio ?? producto.precioVenta ?? "", stock: producto.stock ?? producto.stockActual ?? "", descripcion: producto.descripcion || "", imagen: producto.imagen || empty.imagen, laboratorio: producto.laboratorio || "", requiereReceta: Boolean(producto.requiereReceta), oferta: Boolean(producto.oferta) });
+    const precio = producto.precio ?? producto.precioVenta ?? "";
+    setForm({ id: producto.id, nombre: producto.nombre || "", categoria: producto.categoria?.nombre || producto.categoria || "", precio: String(precio).replace(",", "."), stock: String(producto.stock ?? producto.stockActual ?? ""), descripcion: producto.descripcion || "", imagen: producto.imagen || empty.imagen, laboratorio: producto.laboratorio || "", requiereReceta: Boolean(producto.requiereReceta), oferta: Boolean(producto.oferta) });
+    setTouched({});
+    setSubmitted(false);
     setHighlight(true);
     window.setTimeout(() => setHighlight(false), 1200);
     window.setTimeout(() => {
@@ -81,14 +114,23 @@ export function AdminPanel({ open, setAdminOpen, productos, pedidos, usuarios, r
 
   function cancelarEdicion() {
     setForm(empty);
+    setTouched({});
+    setSubmitted(false);
     firstInputRef.current?.focus();
   }
 
   async function submit(event) {
     event.preventDefault();
+    setSubmitted(true);
     if (!canSave) return;
-    await guardarProductoAdmin({ ...form, precio: Number(form.precio), stock: Number(form.stock) });
-    setForm(empty);
+    const precio = decimalValue(form.precio);
+    const payload = { ...form, categoria: String(form.categoria).trim(), precio, precioVenta: precio, stock: Number(form.stock), stockActual: Number(form.stock) };
+    const saved = await guardarProductoAdmin(payload);
+    if (saved) {
+      setForm(empty);
+      setTouched({});
+      setSubmitted(false);
+    }
   }
 
   function eliminar(producto) {
@@ -114,7 +156,7 @@ export function AdminPanel({ open, setAdminOpen, productos, pedidos, usuarios, r
     return pago.comprobante ? `${base} · Ref: ${pago.comprobante}` : base;
   }
 
-  return <section className="admin-panel"><div className="admin-head"><div><h2>Panel de administración</h2><p>Productos, pedidos y usuarios registrados.</p></div><button onClick={() => setAdminOpen(false)}>Cerrar panel</button></div><div className="admin-grid"><section ref={formRef} className={`admin-card product-form-card ${highlight ? "form-editing-highlight" : ""}`}><div className="form-title-row"><div><h3>{isEditing ? `Editar producto #${form.id}` : "Crear producto"}</h3>{isEditing && <p className="editing-state">Editando producto: {form.nombre}</p>}</div>{isEditing && <button type="button" onClick={cancelarEdicion}>Cancelar edición</button>}</div><form onSubmit={submit} noValidate>{[["nombre", "Nombre *"], ["categoria", "Categoría *"], ["precio", "Precio *"], ["stock", "Stock *"], ["descripcion", "Descripción *"], ["imagen", "Imagen"], ["laboratorio", "Laboratorio"]].map(([field, label], index) => <div className="field" key={field}><label>{label}</label>{field === "descripcion" ? <textarea className={missingFields.includes(field) ? "required-missing" : ""} value={form[field]} onChange={(event) => updateField(field, event.target.value)} /> : <input ref={index === 0 ? firstInputRef : null} className={missingFields.includes(field) ? "required-missing" : ""} type={["precio", "stock"].includes(field) ? "number" : "text"} min={["precio", "stock"].includes(field) ? "0" : undefined} value={form[field]} onChange={(event) => updateField(field, event.target.value)} />}{missingFields.includes(field) && <small className="field-error">Campo obligatorio.</small>}</div>)}<div className="checkbox-row"><label className="check"><input type="checkbox" checked={form.requiereReceta} onChange={(event) => updateField("requiereReceta", event.target.checked)} /><span>Requiere receta</span></label><label className="check"><input type="checkbox" checked={form.oferta} onChange={(event) => updateField("oferta", event.target.checked)} /><span>Oferta</span></label></div>{!canSave && <p className="form-help">Complete los campos obligatorios para guardar el producto.</p>}<button className={`btn-full save-product ${isEditing ? "editing-button" : ""}`} disabled={!canSave} type="submit">{isEditing ? "Actualizar producto" : "Guardar producto"}</button></form></section><section className="admin-card orders-card"><h3>Pedidos</h3>{pedidos.length ? pedidos.map((pedido) => { const totalProductos = pedido.detalles?.reduce((total, item) => total + Number(item.cantidad || 0), 0) || 0; const estadoActual = pedido.estadoPedido?.nombre || "Pendiente"; const abierto = detalleAbierto === pedido.id; return <article className="mini-card order-card" key={pedido.id}><div className="order-summary"><div><h4>Pedido #{pedido.id}</h4><p>Cliente: {clientePedido(pedido)}</p><p>Fecha: {pedido.createdAt ? new Date(pedido.createdAt).toLocaleString() : "Sin fecha"}</p><p>Total: ${Number(pedido.total || 0).toFixed(2)}</p></div><div><p>Estado: <strong>{estadoActual}</strong></p><p>Pago: {pagoPedido(pedido)}</p><p>Dirección: {direccionPedido(pedido)}</p><p>Productos: {totalProductos}</p></div></div><div className="order-actions"><button type="button" onClick={() => setDetalleAbierto(abierto ? null : pedido.id)}>{abierto ? "Ocultar detalle" : "Ver detalle"}</button><label><span>Estado</span><select value={estadoActual} onChange={(event) => cambiarEstadoPedido(pedido.id, event.target.value)}>{estadosPedido.map((estado) => <option key={estado} value={estado}>{estado}</option>)}</select></label></div>{abierto && <div className="order-detail"><h5>Detalle del pedido</h5><p>Cliente: {clientePedido(pedido)} {pedido.cliente?.cedula ? `· Cédula: ${pedido.cliente.cedula}` : ""} {pedido.cliente?.telefono ? `· Tel: ${pedido.cliente.telefono}` : ""}</p><p>Dirección: {direccionPedido(pedido)}</p><p>Pago: {pagoPedido(pedido)}</p><p>Estado actual: {estadoActual}</p><table><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead><tbody>{pedido.detalles?.map((detalle) => <tr key={detalle.id}><td>{detalle.producto?.nombre || `Producto #${detalle.productoId}`}</td><td>{detalle.cantidad}</td><td>${Number(detalle.precioUnitario || 0).toFixed(2)}</td><td>${Number(detalle.subtotal || 0).toFixed(2)}</td></tr>)}</tbody></table><p className="order-total">Total: ${Number(pedido.total || 0).toFixed(2)}</p></div>}</article>; }) : <p>Sin pedidos registrados.</p>}</section></div><section className="admin-card"><h3>Usuarios</h3><table><thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th></tr></thead><tbody>{usuarios.map((usuario) => <tr key={usuario.id}><td>{usuario.username}</td><td>{usuario.email}</td><td><select value={usuario.rolId || ""} onChange={(event) => cambiarRolUsuario(usuario.id, event.target.value)}>{roles.map((rol) => <option key={rol.id} value={rol.id}>{rol.nombre}</option>)}</select></td></tr>)}</tbody></table></section><section className="admin-card"><h3>Productos</h3><table><thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead><tbody>{productos.map((producto) => <tr key={producto.id}><td>{producto.nombre}</td><td>${priceOf(producto).toFixed(2)}</td><td>{stockOf(producto)}</td><td><button onClick={() => editar(producto)}>Editar</button><button className="danger" onClick={() => eliminar(producto)}>Eliminar</button></td></tr>)}</tbody></table></section></section>;
+  return <section className="admin-panel"><div className="admin-head"><div><h2>Panel de administración</h2><p>Productos, pedidos y usuarios registrados.</p></div><button onClick={() => setAdminOpen(false)}>Cerrar panel</button></div><div className="admin-grid"><section ref={formRef} className={`admin-card product-form-card ${highlight ? "form-editing-highlight" : ""}`}><div className="form-title-row"><div><h3>{isEditing ? `Editar producto #${form.id}` : "Crear producto"}</h3>{isEditing && <p className="editing-state">Editando producto: {form.nombre}</p>}</div>{isEditing && <button type="button" onClick={cancelarEdicion}>Cancelar edición</button>}</div><form onSubmit={submit} noValidate>{[["nombre", "Nombre *"], ["categoria", "Categoría *"], ["precio", "Precio *"], ["stock", "Stock *"], ["descripcion", "Descripción *"], ["imagen", "Imagen"], ["laboratorio", "Laboratorio"]].map(([field, label], index) => { const hasError = showFieldError(field); return <div className="field" key={field}><label>{label}</label>{field === "descripcion" ? <textarea className={hasError ? "required-missing" : ""} value={form[field]} onBlur={() => markTouched(field)} onChange={(event) => updateField(field, event.target.value)} /> : <input ref={index === 0 ? firstInputRef : null} className={hasError ? "required-missing" : ""} type={field === "stock" ? "number" : "text"} inputMode={field === "precio" ? "decimal" : field === "stock" ? "numeric" : undefined} min={field === "stock" ? "0" : undefined} value={form[field]} onBlur={() => markTouched(field)} onChange={(event) => updateField(field, event.target.value)} />}{hasError && <small className="field-error">{fieldMessage(field)}</small>}</div>; })}<div className="checkbox-row"><label className="check"><input type="checkbox" checked={form.requiereReceta} onChange={(event) => updateField("requiereReceta", event.target.checked)} /><span>Requiere receta</span></label><label className="check"><input type="checkbox" checked={form.oferta} onChange={(event) => updateField("oferta", event.target.checked)} /><span>Oferta</span></label></div>{!canSave && (submitted || Object.keys(touched).length > 0) && <p className="form-help">Complete los campos obligatorios para guardar el producto.</p>}<button className={`btn-full save-product ${isEditing ? "editing-button" : ""}`} type="submit">{isEditing ? "Actualizar producto" : "Guardar producto"}</button></form></section><section className="admin-card orders-card"><h3>Pedidos</h3>{pedidos.length ? pedidos.map((pedido) => { const totalProductos = pedido.detalles?.reduce((total, item) => total + Number(item.cantidad || 0), 0) || 0; const estadoActual = pedido.estadoPedido?.nombre || "Pendiente"; const abierto = detalleAbierto === pedido.id; return <article className="mini-card order-card" key={pedido.id}><div className="order-summary"><div><h4>Pedido #{pedido.id}</h4><p>Cliente: {clientePedido(pedido)}</p><p>Fecha: {pedido.createdAt ? new Date(pedido.createdAt).toLocaleString() : "Sin fecha"}</p><p>Total: ${Number(pedido.total || 0).toFixed(2)}</p></div><div><p>Estado: <strong>{estadoActual}</strong></p><p>Pago: {pagoPedido(pedido)}</p><p>Dirección: {direccionPedido(pedido)}</p><p>Productos: {totalProductos}</p></div></div><div className="order-actions"><button type="button" onClick={() => setDetalleAbierto(abierto ? null : pedido.id)}>{abierto ? "Ocultar detalle" : "Ver detalle"}</button><label><span>Estado</span><select value={estadoActual} onChange={(event) => cambiarEstadoPedido(pedido.id, event.target.value)}>{estadosPedido.map((estado) => <option key={estado} value={estado}>{estado}</option>)}</select></label></div>{abierto && <div className="order-detail"><h5>Detalle del pedido</h5><p>Cliente: {clientePedido(pedido)} {pedido.cliente?.cedula ? `· Cédula: ${pedido.cliente.cedula}` : ""} {pedido.cliente?.telefono ? `· Tel: ${pedido.cliente.telefono}` : ""}</p><p>Dirección: {direccionPedido(pedido)}</p><p>Pago: {pagoPedido(pedido)}</p><p>Estado actual: {estadoActual}</p><table><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead><tbody>{pedido.detalles?.map((detalle) => <tr key={detalle.id}><td>{detalle.producto?.nombre || `Producto #${detalle.productoId}`}</td><td>{detalle.cantidad}</td><td>${Number(detalle.precioUnitario || 0).toFixed(2)}</td><td>${Number(detalle.subtotal || 0).toFixed(2)}</td></tr>)}</tbody></table><p className="order-total">Total: ${Number(pedido.total || 0).toFixed(2)}</p></div>}</article>; }) : <p>Sin pedidos registrados.</p>}</section></div><section className="admin-card"><h3>Usuarios</h3><table><thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th></tr></thead><tbody>{usuarios.map((usuario) => <tr key={usuario.id}><td>{usuario.username}</td><td>{usuario.email}</td><td><select value={usuario.rolId || ""} onChange={(event) => cambiarRolUsuario(usuario.id, event.target.value)}>{roles.map((rol) => <option key={rol.id} value={rol.id}>{rol.nombre}</option>)}</select></td></tr>)}</tbody></table></section><section className="admin-card"><h3>Productos</h3><table><thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead><tbody>{productos.map((producto) => <tr key={producto.id}><td>{producto.nombre}</td><td>${priceOf(producto).toFixed(2)}</td><td>{stockOf(producto)}</td><td><button onClick={() => editar(producto)}>Editar</button><button className="danger" onClick={() => eliminar(producto)}>Eliminar</button></td></tr>)}</tbody></table></section></section>;
 }
 
 export function Toast({ message }) { return message ? <div className="toast" role="status">{message}</div> : null; }
