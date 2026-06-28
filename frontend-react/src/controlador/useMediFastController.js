@@ -175,6 +175,12 @@ export function useMediFastController() {
   }
 
   function requireAdmin() {
+    if (!getToken() || !user) {
+      setAuthMode("login");
+      setAdminOpen(false);
+      notify("Debe iniciar sesión como administrador.");
+      return false;
+    }
     if (roleOf(user) !== "admin") {
       notify("No tiene permisos para esta acción.");
       return false;
