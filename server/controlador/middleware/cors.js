@@ -1,20 +1,29 @@
-﻿import cors from "cors";
+import cors from "cors";
+
+function normalizeOrigin(origin) {
+  return String(origin || "").trim().replace(/\/$/, "");
+}
 
 export function corsMiddleware() {
-  const allowedOrigin = process.env.CORS_ORIGIN || "http://127.0.0.1:5500";
+  const configuredOrigins = (process.env.CORS_ORIGIN || "https://medi-fast-v3.vercel.app")
+    .split(",")
+    .map(normalizeOrigin)
+    .filter(Boolean);
+  const allowedOrigins = new Set(configuredOrigins);
 
   return cors({
     origin(origin, callback) {
       if (!origin) return callback(null, true);
 
-      if (origin === allowedOrigin) {
+      if (allowedOrigins.has(normalizeOrigin(origin))) {
         return callback(null, true);
       }
 
       return callback(new Error("CORS: origen no permitido"));
     },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: false
+    credentials: process.env.CORS_CREDENTIALS === "true",
+    optionsSuccessStatus: 204
   });
 }

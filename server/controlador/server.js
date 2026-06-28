@@ -20,10 +20,10 @@ const PORT = process.env.PORT || 3000;
 
 app.set("trust proxy", 1);
 
+app.use(corsMiddleware());
 app.use(express.json());
 app.use(helmetMiddleware);
 app.use(apiLimiter);
-app.use(corsMiddleware());
 app.use(logger);
 
 app.get("/", (req, res) => {

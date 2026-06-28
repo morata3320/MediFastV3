@@ -4,6 +4,7 @@ import request from "supertest";
 
 process.env.NODE_ENV = "test";
 process.env.JWT_SECRET = "medifast-test-secret";
+process.env.CORS_ORIGIN = "https://medi-fast-v3.vercel.app";
 
 const adminHash = await bcrypt.hash("Admin123!", 4);
 const userHash = await bcrypt.hash("User123!", 4);
@@ -63,6 +64,18 @@ beforeAll(() => {
 afterAll(() => jest.restoreAllMocks());
 
 describe("API MediFast RDA 3", () => {
+  test("CORS preflight permite PATCH con Authorization", async () => {
+    const response = await request(app)
+      .options("/api/pedidos/100/estado")
+      .set("Origin", "https://medi-fast-v3.vercel.app")
+      .set("Access-Control-Request-Method", "PATCH")
+      .set("Access-Control-Request-Headers", "Authorization, Content-Type");
+
+    expect(response.status).toBe(204);
+    expect(response.headers["access-control-allow-methods"]).toContain("PATCH");
+    expect(response.headers["access-control-allow-headers"]).toContain("Authorization");
+  });
+
   test("login exitoso de administrador entrega token y usuario seguro", async () => {
     const response = await request(app).post("/api/auth/login").send({ identifier: "admin", password: "Admin123!" });
 
