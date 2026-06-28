@@ -3,6 +3,21 @@ export function formatExpiry(value) {
   return digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits;
 }
 
+export function onlyDigits(value) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+export function formatCardNumber(value) {
+  return onlyDigits(value)
+    .slice(0, 16)
+    .replace(/(.{4})/g, "$1 ")
+    .trim();
+}
+
+export function normalizeDecimal(value) {
+  return String(value ?? "").trim().replace(",", ".");
+}
+
 export function validateCedula(value) {
   return /^\d{10}$/.test(String(value));
 }
@@ -34,10 +49,10 @@ export function validateCheckout(form) {
 
   if (form.metodo === "Tarjeta") {
     if (!validateTarjeta(form.tarjeta)) errors.tarjeta = "La tarjeta debe contener solo números y máximo 16 dígitos.";
-    if (!validateVencimiento(form.vencimiento)) errors.vencimiento = "Use el formato MM/AA.";
+    if (!validateVencimiento(form.vencimiento)) errors.vencimiento = "El vencimiento debe tener formato MM/AA.";
     if (!validateCvv(form.cvv)) errors.cvv = "El CVV debe tener 3 o 4 dígitos.";
   }
-  if (form.metodo === "Transferencia" && !form.comprobante.trim() && !form.referenciaPago.trim()) {
+  if (form.metodo === "Transferencia" && !String(form.comprobante || "").trim() && !String(form.referenciaPago || "").trim()) {
     errors.comprobante = "Ingrese el comprobante o referencia de la transferencia.";
   }
   return errors;

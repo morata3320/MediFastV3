@@ -20,6 +20,12 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .no-stock, .out-of-stock { color: #b42318; font-weight: 600; }
 .no-stock { background: #fde8e7; }
 .field { display: grid; gap: .35rem; }
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #7a9388;
+  opacity: 1;
+}
+.field-help { color: #526b60; font-size: .82rem; }
 .field-error { color: #b42318; font-size: .85rem; }
 .field input[aria-invalid="true"] { border-color: #b42318; background: #fff7f6; }
 .field select { width: 100%; padding: .7rem; border: 1px solid #b7c9c0; border-radius: .4rem; background: white; }
