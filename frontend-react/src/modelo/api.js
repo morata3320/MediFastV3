@@ -88,6 +88,10 @@ export const productosApi = {
   eliminar: (id) => request(`/productos/${id}`, { method: "DELETE" })
 };
 
+export const categoriasApi = {
+  listar: () => request("/categorias")
+};
+
 export const pedidosApi = {
   crear: (items, pago, cliente, direccion) => request("/pedidos", { method: "POST", body: { items, pago, cliente, direccion } }),
   misPedidos: () => request("/pedidos/mis-pedidos"),

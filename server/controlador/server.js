@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 
 import authRouter from "./routes/auth.routes.js";
 import productosRouter from "./routes/productos.routes.js";
+import categoriasRouter from "./routes/categorias.routes.js";
 import pedidosRouter from "./routes/pedidos.routes.js";
 import usuariosRouter from "./routes/usuarios.routes.js";
 import rolesRouter from "./routes/roles.routes.js";
@@ -44,6 +45,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/productos", productosRouter);
+app.use("/api/categorias", categoriasRouter);
 app.use("/api/pedidos", pedidosRouter);
 app.use("/api/usuarios", usuariosRouter);
 app.use("/api/roles", rolesRouter);

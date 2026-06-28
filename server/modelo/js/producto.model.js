@@ -22,6 +22,19 @@ async function referencia(nombre, abreviatura = "Und") {
   return { categoria, unidadMedida };
 }
 
+async function resolverCategoria(data, fallbackNombre = "General") {
+  if (data.categoriaId !== undefined && data.categoriaId !== null && data.categoriaId !== "") {
+    const categoria = await prisma.categoria.findFirst({ where: { id: Number(data.categoriaId), activo: true } });
+    if (!categoria) throw new Error("Categoria invalida.");
+    return categoria;
+  }
+  return (await referencia(data.categoria || fallbackNombre, data.unidad || "Und")).categoria;
+}
+
+async function resolverUnidad(data, fallbackAbreviatura = "Und") {
+  return (await referencia(data.categoria || "General", data.unidad || fallbackAbreviatura)).unidadMedida;
+}
+
 export async function findAllProductos() {
   const productos = await prisma.producto.findMany({ orderBy: { id: "asc" }, include, where: { activo: true } });
   return productos.map(serializarProducto);
@@ -30,7 +43,8 @@ export async function findProductoById(id) {
   return serializarProducto(await prisma.producto.findUnique({ where: { id: Number(id) }, include }));
 }
 export async function createProducto(data) {
-  const { categoria, unidadMedida } = await referencia(data.categoria || "General", data.unidad || "Und");
+  const categoria = await resolverCategoria(data);
+  const unidadMedida = await resolverUnidad(data);
   const producto = await prisma.producto.create({ data: {
     nombre: data.nombre, categoriaId: categoria.id, unidadMedidaId: unidadMedida.id,
     precioVenta: Number(data.precioVenta ?? data.precio), precioCompra: Number(data.precioCompra ?? 0),
@@ -44,10 +58,11 @@ export async function createProducto(data) {
 export async function updateProducto(id, data) {
   const existe = await prisma.producto.findUnique({ where: { id: Number(id) }, include });
   if (!existe) return null;
-  const ref = data.categoria || data.unidad ? await referencia(data.categoria || existe.categoria.nombre, data.unidad || existe.unidadMedida.abreviatura) : null;
+  const categoria = data.categoriaId !== undefined || data.categoria ? await resolverCategoria(data, existe.categoria.nombre) : null;
+  const unidadMedida = data.unidad ? await resolverUnidad(data, existe.unidadMedida.abreviatura) : null;
   const producto = await prisma.producto.update({ where: { id: Number(id) }, data: {
-    nombre: data.nombre ?? existe.nombre, categoriaId: ref?.categoria.id ?? existe.categoriaId,
-    unidadMedidaId: ref?.unidadMedida.id ?? existe.unidadMedidaId,
+    nombre: data.nombre ?? existe.nombre, categoriaId: categoria?.id ?? existe.categoriaId,
+    unidadMedidaId: unidadMedida?.id ?? existe.unidadMedidaId,
     precioVenta: (data.precioVenta ?? data.precio) !== undefined ? Number(data.precioVenta ?? data.precio) : existe.precioVenta,
     precioCompra: data.precioCompra !== undefined ? Number(data.precioCompra) : existe.precioCompra,
     stockActual: (data.stockActual ?? data.stock) !== undefined ? Number(data.stockActual ?? data.stock) : existe.stockActual,

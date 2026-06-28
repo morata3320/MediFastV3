@@ -69,6 +69,7 @@ export default function App() {
         open={c.adminOpen}
         setAdminOpen={c.setAdminOpen}
         productos={c.adminProductos}
+        categorias={c.adminCategorias}
         pedidos={c.adminPedidos}
         usuarios={c.adminUsuarios}
         roles={c.adminRoles}

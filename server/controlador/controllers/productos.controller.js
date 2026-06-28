@@ -51,12 +51,13 @@ export async function postProducto(req, res, next) {
     const {
       nombre,
       categoria,
+      categoriaId,
       precio,
       descripcion,
       stock
     } = req.body || {};
 
-    if (!nombre || !categoria || precio === undefined || !descripcion || stock === undefined) {
+    if (!nombre || (!categoria && !categoriaId) || precio === undefined || !descripcion || stock === undefined) {
       return fail(res, "Datos incompletos para crear producto", 400);
     }
 

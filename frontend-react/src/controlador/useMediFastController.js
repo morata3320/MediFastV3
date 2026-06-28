@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   ApiError,
+  categoriasApi,
   getCurrentUser,
   getToken,
   login,
@@ -33,6 +34,7 @@ export function useMediFastController() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminProductos, setAdminProductos] = useState([]);
+  const [adminCategorias, setAdminCategorias] = useState([]);
   const [adminPedidos, setAdminPedidos] = useState([]);
   const [adminUsuarios, setAdminUsuarios] = useState([]);
   const [adminRoles, setAdminRoles] = useState([]);
@@ -192,8 +194,9 @@ export function useMediFastController() {
     if (!requireAdmin()) return;
     setIsSubmitting(true);
     try {
-      const [productosAdmin, pedidos, usuarios, roles] = await Promise.all([productosApi.listar(), pedidosApi.todos(), usuariosApi.listar(), rolesApi.listar()]);
+      const [productosAdmin, categoriasAdmin, pedidos, usuarios, roles] = await Promise.all([productosApi.listar(), categoriasApi.listar(), pedidosApi.todos(), usuariosApi.listar(), rolesApi.listar()]);
       setAdminProductos(productosAdmin);
+      setAdminCategorias(categoriasAdmin);
       setAdminPedidos(pedidos);
       setAdminUsuarios(usuarios);
       setAdminRoles(roles);
@@ -266,7 +269,7 @@ export function useMediFastController() {
   return {
     productosFiltrados, categorias, categoria, setCategoria, busqueda, setBusqueda, cart, totals, user,
     toast, catalogLoading, catalogError, isSubmitting, cartOpen, setCartOpen, authMode, setAuthMode,
-    checkoutOpen, setCheckoutOpen, adminOpen, setAdminOpen, adminProductos, adminPedidos, adminUsuarios,
+    checkoutOpen, setCheckoutOpen, adminOpen, setAdminOpen, adminProductos, adminCategorias, adminPedidos, adminUsuarios,
     adminRoles, agregar, cambiarCantidad, quitar: (id) => setCart((items) => removeItem(items, id)),
     loginUser, registerUser, logoutUser, iniciarCheckout, confirmarPedido, cargarAdmin,
     guardarProductoAdmin, eliminarProductoAdmin, cambiarRolUsuario, cambiarEstadoPedido, cargarProductos

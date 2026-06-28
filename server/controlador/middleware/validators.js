@@ -64,9 +64,14 @@ export const validateProductoCreate = [
     .isLength({ min: 2, max: 120 }).withMessage("nombre debe tener entre 2 y 120 caracteres")
     .customSanitizer((v) => xss(v)),
   body("categoria")
+    .optional()
     .isString().withMessage("categoria debe ser texto")
     .trim()
     .customSanitizer((v) => xss(v)),
+  body("categoriaId")
+    .optional()
+    .isInt({ min: 1 }).withMessage("categoriaId debe ser un entero valido")
+    .toInt(),
   body("precio")
     .optional()
     .isFloat({ min: 0 }).withMessage("precio debe ser numero mayor o igual a 0")
@@ -88,6 +93,7 @@ export const validateProductoCreate = [
     .isInt({ min: 0 }).withMessage("stockActual debe ser entero mayor o igual a 0")
     .toInt(),
   body().custom((value) => {
+    if (value.categoria === undefined && value.categoriaId === undefined) throw new Error("categoria o categoriaId es obligatorio");
     if (value.precio === undefined && value.precioVenta === undefined) throw new Error("precio o precioVenta es obligatorio");
     if (value.stock === undefined && value.stockActual === undefined) throw new Error("stock o stockActual es obligatorio");
     return true;
@@ -106,6 +112,10 @@ export const validateProductoUpdate = [
     .isString().withMessage("categoria debe ser texto")
     .trim()
     .customSanitizer((v) => xss(v)),
+  body("categoriaId")
+    .optional()
+    .isInt({ min: 1 }).withMessage("categoriaId debe ser un entero valido")
+    .toInt(),
   body("precio")
     .optional()
     .isFloat({ min: 0 }).withMessage("precio debe ser numero mayor o igual a 0")

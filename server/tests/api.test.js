@@ -43,6 +43,9 @@ jest.unstable_mockModule("../modelo/js/producto.model.js", () => ({
   updateProducto: jest.fn(),
   deleteProducto: jest.fn()
 }));
+jest.unstable_mockModule("../modelo/js/categoria.model.js", () => ({
+  findActiveCategorias: jest.fn(async () => [{ id: 1, nombre: "Analgesicos", descripcion: null }])
+}));
 jest.unstable_mockModule("../modelo/js/pedido.model.js", () => ({
   createPedido: createPedidoMock,
   findPedidosByUser: jest.fn(async () => []),
@@ -103,6 +106,12 @@ describe("API MediFast RDA 3", () => {
   test("administrador accede a ruta admin", async () => {
     const response = await request(app).get("/api/pedidos").set("Authorization", `Bearer ${adminToken}`);
     expect(response.status).toBe(200);
+  });
+
+  test("lista categorias activas sin autenticacion", async () => {
+    const response = await request(app).get("/api/categorias");
+    expect(response.status).toBe(200);
+    expect(response.body.data[0]).toMatchObject({ id: 1, nombre: "Analgesicos" });
   });
 
   test("producto invalido devuelve 400", async () => {
