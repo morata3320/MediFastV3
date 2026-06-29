@@ -5,15 +5,25 @@ server/node_modules/
 
 # Variables de entorno reales
 .env
+.env.local
+.env.production
 server/.env
+server/.env.local
+server/.env.production
 frontend-react/.env
+frontend-react/.env.local
+frontend-react/.env.production
 
 # Archivos temporales
 *.log
 npm-debug.log*
 .DS_Store
 Thumbs.db
+
+# Builds y cobertura
 dist/
+build/
+coverage/
 frontend-react/dist/
 
 # Prisma / desarrollo local

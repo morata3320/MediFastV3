@@ -1,118 +1,195 @@
-# MediFastV3 — RDA 3
+# MediFastV3 – Farmacia Online
 
-MediFastV3 es una farmacia online construida como aplicación cliente-servidor. El frontend final es React + Vite y consume una API REST en Node.js/Express. La solución incluye autenticación JWT, roles, catálogo, carrito, checkout, pagos, control de stock e inventario.
+## Descripción general
 
-- Frontend final: `frontend-react/`.
-- Backend: `server/`.
-- Frontend desplegado: [https://medi-fast-v3.vercel.app](https://medi-fast-v3.vercel.app/).
-- Backend desplegado: [https://medifastv3.onrender.com](https://medifastv3.onrender.com/).
-- API productos: [https://medifastv3.onrender.com/api/productos](https://medifastv3.onrender.com/api/productos).
-- Base de datos: Google Cloud SQL Server.
+MediFastV3 es una plataforma web tipo farmacia online. Permite consultar un catálogo de productos médicos, buscar y filtrar productos, gestionar un carrito de compras, realizar checkout, registrar pedidos y administrar productos, usuarios, roles y estados de pedido desde un panel protegido.
+
+El sistema incluye autenticación con JWT, roles `admin` y `user`, rutas protegidas, validaciones de formularios, control de stock, pagos por efectivo/tarjeta/transferencia y despliegue en la nube.
+
+Repositorio GitHub: [https://github.com/morata3320/MediFastV3](https://github.com/morata3320/MediFastV3)
+
+## Arquitectura
+
+El proyecto usa arquitectura cliente-servidor:
+
+- El frontend React se ejecuta en el navegador y consume la API mediante HTTP.
+- El backend Express expone endpoints REST, valida seguridad y aplica reglas de negocio.
+- La base SQL Server en Google Cloud SQL almacena usuarios, productos, pedidos, pagos e inventario.
+- Prisma ORM conecta el backend con SQL Server.
+
+### MVC en frontend
+
+El frontend final está en `frontend-react/` y mantiene una separación MVC visible:
+
+- `frontend-react/src/modelo`: API, sesión, carrito y validaciones.
+- `frontend-react/src/controlador`: estado, hooks, navegación y rutas protegidas.
+- `frontend-react/src/vista`: componentes visuales, pantallas, formularios y panel admin.
+
+### MVC en backend
+
+El backend está en `server/` y mantiene estructura MVC:
+
+- `server/modelo`: Prisma, modelos y acceso a datos.
+- `server/vista`: respuestas JSON homogéneas.
+- `server/controlador`: servidor, controladores, rutas y middleware.
+- `server/controlador/routes`: definición de rutas REST.
+- `server/controlador/controllers`: casos de uso HTTP.
+- `server/controlador/middleware`: autenticación, autorización, CORS, validadores, rate limit y errores.
 
 ## Tecnologías
 
-- Frontend: React 19, Vite, CSS propio, ESLint y Vitest.
-- Backend: Node.js, Express, Prisma ORM, Jest, Supertest y ESLint.
-- Base de datos: Google Cloud SQL Server en producción y SQL Server local para desarrollo.
-- Seguridad: JWT, bcrypt, Helmet, CORS restringido, rate limiting, express-validator y sanitización XSS.
+### Frontend
 
-## Arquitectura MVC
-
-### Frontend React
-
-`frontend-react/src/` conserva separación MVC:
-
-- `modelo/`: API centralizada, sesión, carrito y validaciones de checkout.
-- `vista/`: componentes visuales de catálogo, carrito, autenticación, checkout y administración.
-- `controlador/`: hook `useMediFastController`, que coordina estado, reglas de negocio de interfaz y llamadas al modelo.
-
-### Rutas protegidas en React
-
-El frontend usa React Router para navegación y protección visual:
-
-- `/`: catálogo público.
-- `/login`: login y registro.
-- `/checkout`: requiere sesión.
-- `/mis-pedidos`: requiere sesión.
-- `/admin`: requiere rol `admin`.
-- `/no-autorizado`: respuesta para usuarios autenticados sin permisos.
-
-Esta protección mejora la experiencia y evita accesos accidentales desde la interfaz. La seguridad real permanece en el backend, donde cada ruta privada valida JWT y rol.
+- React
+- Vite
+- React Router
+- Fetch API
+- CSS responsive
+- Vitest
+- ESLint
 
 ### Backend
 
-`server/` implementa MVC:
+- Node.js
+- Express
+- Prisma ORM
+- SQL Server
+- JWT
+- Helmet
+- CORS
+- Jest
+- Supertest
+- ESLint
 
-- `modelo/js/`: acceso a Prisma y operaciones de usuarios, productos y pedidos.
-- `vista/`: formato consistente de respuestas HTTP.
-- `controlador/controllers/`: casos de uso de autenticación, productos, pedidos, usuarios y roles.
-- `controlador/routes/` y `middleware/`: rutas, autorización, validación, seguridad y errores.
+### Base de datos
 
-## Base de datos
+- Google Cloud SQL Server
+- SQL Server local para desarrollo
 
-SQL Server se accede exclusivamente mediante Prisma. El modelo incluye `Rol`, `Usuario`, `Cliente`, `DireccionCliente`, `Categoria`, `UnidadMedida`, `Producto`, `TipoMovimientoInventario`, `MovimientoInventario`, `Proveedor`, `Compra`, `CompraDetalle`, `EstadoPedido`, `MetodoPago`, `Pedido`, `PedidoDetalle` y `Pago`.
+### Despliegue
 
-`Usuario` se relaciona con `Rol` mediante `rolId`. No se usan enums Prisma para mantener compatibilidad con SQL Server. La API conserva los aliases `precio`/`stock` además de `precioVenta`/`stockActual` para no romper el frontend.
+- Vercel para frontend
+- Render para backend
+- Google Cloud SQL para base de datos
 
-## Funcionalidades
+## URLs de producción
 
-- Registro, login, JWT y roles `admin` / `user`.
-- CRUD de productos protegido para administradores.
-- Catálogo con búsqueda, categorías, oferta, receta, stock bajo y sin stock.
-- Carrito persistente en `localStorage`, respetando la cantidad disponible.
-- Checkout con cliente, dirección y pagos por efectivo, tarjeta o transferencia.
-- La tarjeta no se persiste: el backend guarda únicamente `tarjetaUltimos4`.
-- Pedido transaccional: crea detalles, valida y descuenta stock, crea pago y registra `SALIDA_VENTA` en inventario.
+- Frontend: [https://medi-fast-v3.vercel.app](https://medi-fast-v3.vercel.app)
+- Backend: [https://medifastv3.onrender.com](https://medifastv3.onrender.com)
+- API productos: [https://medifastv3.onrender.com/api/productos](https://medifastv3.onrender.com/api/productos)
 
-## Seguridad y OWASP
+## Funcionalidades principales
 
-- **Broken Access Control:** middleware JWT, `requireRole`, rutas protegidas en React y respuestas 401/403 para rutas privadas y administrativas.
-- **Identification and Authentication Failures:** contraseñas con bcrypt, JWT con expiración, cierre de sesión ante 401 y límite de intentos en login/registro.
-- **Injection:** Prisma parametriza consultas; `express-validator` y sanitización XSS validan entradas.
-- **Security Misconfiguration:** Helmet, CORS por `CORS_ORIGIN`, manejo de errores sin stack en producción, `.env` ignorado por Git.
-- **Cryptographic Failures:** secretos en variables de entorno y ninguna tarjeta completa almacenada.
-- **Security Logging and Monitoring Failures:** logger básico de solicitudes y errores controlados sin exponer secretos al cliente.
+- Catálogo de productos.
+- Búsqueda y filtros.
+- Carrito de compras.
+- Checkout.
+- Métodos de pago: efectivo, tarjeta y transferencia.
+- Pedidos.
+- Cambio de estado del pedido.
+- CRUD de productos.
+- Gestión de usuarios y roles.
+- Modo oscuro.
+- Rutas protegidas.
+- Validaciones de formularios.
+- Mensajes de error y éxito.
+- Stock bajo/sin stock.
+- Movimiento de inventario por venta.
+
+## Seguridad aplicada
+
+- Autenticación con JWT.
+- Roles `admin` y `user`.
+- Rutas protegidas en frontend.
+- Middleware de autenticación en backend.
+- Autorización por rol en rutas administrativas.
+- CORS restringido al dominio del frontend.
+- Helmet activo para cabeceras de seguridad.
+- Rate limit en login/registro.
+- Hash de contraseñas con bcrypt.
+- Validación y sanitización de entradas.
+- Manejo de errores controlados.
+- No exposición de errores internos de Prisma.
+- No exposición de `passwordHash`.
+- No se guarda número completo de tarjeta; solo últimos 4 dígitos cuando aplica.
+- Variables sensibles fuera del repositorio mediante `.env`.
+
+## OWASP aplicado
+
+1. **Broken Access Control:** rutas protegidas, JWT requerido en rutas privadas y autorización por rol `admin/user`.
+2. **Identification and Authentication Failures:** login con JWT, hash de contraseñas, expiración de token y rate limit en autenticación.
+3. **Injection:** Prisma ORM, validaciones con `express-validator` y sanitización contra HTML/script.
+4. **Security Misconfiguration:** Helmet, CORS restringido, `.env` ignorado, errores sin stack en producción.
+5. **Cryptographic Failures:** contraseñas con hash, secretos en variables de entorno y tarjetas no almacenadas completas.
+6. **Security Logging and Monitoring Failures:** logger de requests y registro de errores 4xx/5xx sin exponer tokens ni contraseñas.
+
+## Rutas principales
+
+### Frontend
+
+- `/`
+- `/login`
+- `/checkout`
+- `/admin`
+- `/mis-pedidos`
+- `/no-autorizado`
+
+### Backend
+
+- `GET /api/productos`
+- `GET /api/productos/:id`
+- `POST /api/productos`
+- `PUT /api/productos/:id`
+- `DELETE /api/productos/:id`
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `GET /api/pedidos`
+- `POST /api/pedidos`
+- `PATCH /api/pedidos/:id/estado`
+- `GET /api/usuarios`
+- `GET /api/roles`
+- `GET /api/categorias`
+
+## Roles de prueba
+
+Credenciales de demostración para defensa y pruebas. No se muestran en la interfaz pública.
+
+| Rol | Usuario | Contraseña |
+| --- | --- | --- |
+| Admin | `admin` | `Admin123!` |
+| Usuario | `user` | `User123!` |
 
 ## Instalación local
 
-### 1. Base de datos y backend
+### Backend
 
-Copie `server/.env.example` como `server/.env` y reemplace los marcadores de SQL Server y JWT. No suba este archivo al repositorio.
-El archivo `.env` real no se sube al repositorio. `server/.env.example` es solo una referencia segura sin credenciales reales.
+Crear `server/.env` tomando como referencia `server/.env.example`.
 
-```powershell
-cd C:\Users\NW\Desktop\MediFastV3\server
+```bash
+cd server
 npm install
 npm run prisma:generate
-npx prisma migrate deploy --schema=modelo/prisma/schema.prisma
 npm run seed
-npm run lint
-npm test
 npm run dev
 ```
 
-La API queda disponible en `http://localhost:3000` y Prisma Studio se abre con:
+Comandos útiles de Prisma:
 
-```powershell
-npm run prisma:studio
+```bash
+npx prisma validate --schema=modelo/prisma/schema.prisma
+npx prisma migrate status --schema=modelo/prisma/schema.prisma
+npx prisma studio --schema=modelo/prisma/schema.prisma
 ```
 
-### 2. Frontend React
+### Frontend
 
-En otra terminal:
-
-```powershell
-cd C:\Users\NW\Desktop\MediFastV3\frontend-react
+```bash
+cd frontend-react
 npm install
-npm run lint
-npm test
-npm run build
 npm run dev
 ```
 
-El frontend queda disponible en `http://localhost:5173`.
-
-Opcionalmente cree `frontend-react/.env`:
+Para desarrollo local puede configurarse `frontend-react/.env`:
 
 ```env
 VITE_API_URL=http://localhost:3000
@@ -120,72 +197,115 @@ VITE_API_URL=http://localhost:3000
 
 ## Variables de entorno
 
-Consulte [server/.env.example](server/.env.example). Las variables requeridas son:
+El archivo real `server/.env` no se sube al repositorio. Use `server/.env.example` como referencia segura.
 
-| Variable | Uso |
-| --- | --- |
-| `PORT` | Puerto de Express. |
-| `NODE_ENV` | Entorno (`development`, `test` o `production`). |
-| `CORS_ORIGIN` | Origen permitido para React. |
-| `DATABASE_URL` | Conexión de Prisma a SQL Server. |
-| `JWT_SECRET` | Secreto de firma JWT; debe cambiarse en producción. |
-| `JWT_EXPIRES_IN` | Vigencia del token. |
+Variables principales:
 
-En producción, Render debe recibir estas variables desde su panel de entorno. Vercel debe configurar `VITE_API_URL=https://medifastv3.onrender.com`.
+- `PORT`
+- `NODE_ENV`
+- `CORS_ORIGIN`
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
 
-## Usuarios de prueba
+Ejemplo local y ejemplo de producción están documentados en [server/.env.example](server/.env.example).
 
-Solo para desarrollo y demostración tras ejecutar el seed:
+## Pruebas
 
-| Rol | Usuario | Contraseña |
-| --- | --- | --- |
-| Administrador | `admin` | `Admin123!` |
-| Cliente | `user` | `User123!` |
+### Backend
 
-No use estas credenciales en producción.
-
-## Endpoints principales
-
-| Método | Endpoint | Acceso |
-| --- | --- | --- |
-| POST | `/api/auth/register` | Público |
-| POST | `/api/auth/login` | Público |
-| GET | `/api/productos` | Público |
-| GET | `/api/productos/:id` | Público |
-| POST / PUT / DELETE | `/api/productos` | Admin |
-| POST | `/api/pedidos` | Usuario autenticado |
-| GET | `/api/pedidos/mis-pedidos` | Usuario autenticado |
-| GET | `/api/pedidos` | Admin |
-| GET | `/api/usuarios` | Admin |
-| PUT | `/api/usuarios/:id/rol` | Admin |
-| GET | `/api/roles` | Admin |
-
-## Pruebas y calidad
-
-- Backend: 11 pruebas Jest/Supertest para login, autorización, validación, stock, pedido, pago e inventario.
-- Frontend: pruebas Vitest para carrito, validaciones de checkout, máscaras, sesión en `localStorage` y manejo de 401/403/red.
-- Verificación realizada: lint backend y frontend sin errores; build React exitoso.
-
-## Estructura final recomendada
-
-```text
-MediFastV3/
-├── server/              # API Express, Prisma y pruebas backend
-├── frontend-react/      # Frontend final React + Vite
-├── docs/                # Evidencias y guía de defensa
-├── README.md
-├── .gitignore
-└── server/.env.example
+```bash
+cd server
+npm test
+npm run lint
 ```
 
-La carpeta histórica `frontend/` fue retirada de la entrega. El frontend final es `frontend-react/`.
+Pruebas backend: Jest + Supertest para login, autorización, validaciones, checkout, stock, pagos y pedidos.
+
+### Frontend
+
+```bash
+cd frontend-react
+npm test
+npm run lint
+npm run build
+```
+
+Pruebas frontend: Vitest para carrito, validaciones, máscaras, sesión, errores 401/403/409 y manejo de red.
 
 ## Despliegue
 
-- Frontend: Vercel con `VITE_API_URL=https://medifastv3.onrender.com`.
-- Backend: Render con `NODE_ENV=production`, `CORS_ORIGIN=https://medi-fast-v3.vercel.app`, `DATABASE_URL`, `JWT_SECRET` y `JWT_EXPIRES_IN`.
-- Base de datos: Google Cloud SQL Server accesible para Render mediante la cadena segura de `DATABASE_URL`.
+### Frontend
 
-## Evidencias y defensa
+Vercel:
 
-Consulte [EVIDENCIAS_RDA3.md](docs/EVIDENCIAS_RDA3.md) para las capturas y [GUIA_DEFENSA_RDA3.md](docs/GUIA_DEFENSA_RDA3.md) para la explicación técnica.
+- Root directory: `frontend-react`
+- Variable recomendada: `VITE_API_URL=https://medifastv3.onrender.com`
+
+### Backend
+
+Render:
+
+- Root directory: `server`
+- Start command: `npm start`
+- Variables necesarias:
+  - `NODE_ENV=production`
+  - `CORS_ORIGIN=https://medi-fast-v3.vercel.app`
+  - `DATABASE_URL`
+  - `JWT_SECRET`
+  - `JWT_EXPIRES_IN`
+
+### Base de datos
+
+Google Cloud SQL Server:
+
+- La base debe ser accesible desde Render.
+- La cadena `DATABASE_URL` real se configura solo en variables de entorno.
+- No se suben credenciales reales al repositorio.
+
+## Evidencias sugeridas
+
+- GitHub con commits.
+- Vercel live.
+- Render live.
+- Google Cloud SQL.
+- API productos.
+- Login JWT.
+- Rutas protegidas.
+- `401` sin token.
+- `403` con usuario sin permisos.
+- `200` con admin.
+- CRUD productos.
+- Checkout.
+- Tests backend/frontend.
+- Lint backend/frontend.
+- Build frontend.
+
+Ver checklist en [docs/EVIDENCIAS_RDA3.md](docs/EVIDENCIAS_RDA3.md) y guía técnica en [docs/GUIA_DEFENSA_RDA3.md](docs/GUIA_DEFENSA_RDA3.md).
+
+## Estructura final
+
+```text
+MediFastV3/
+├─ server/
+├─ frontend-react/
+├─ docs/
+├─ README.md
+├─ .gitignore
+└─ server/.env.example
+```
+
+## Estado final
+
+MediFastV3 cumple con:
+
+- Frontend React final en `frontend-react/`.
+- Backend API REST en `server/`.
+- Persistencia en Google Cloud SQL Server.
+- Seguridad con JWT y roles.
+- Rutas protegidas.
+- Checkout con pagos y stock.
+- Pruebas automatizadas.
+- Lint y build.
+- Despliegue en Vercel y Render.
+- Documentación para entrega y defensa RDA3.
