@@ -565,6 +565,12 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   align-items: center;
 }
 
+.checkout-email-check {
+  background: var(--button-soft);
+  border-radius: .75rem;
+  padding: .75rem .9rem;
+}
+
 .product-form-card {
   transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
 }

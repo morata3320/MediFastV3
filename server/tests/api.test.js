@@ -18,6 +18,11 @@ const createPedidoMock = jest.fn(async (_userId, items, pago) => {
   if (items.some((item) => Number(item.productoId || item.id) === 999)) {
     throw new Error("Stock insuficiente para Producto de prueba");
   }
+  if (items.some((item) => Number(item.productoId || item.id) === 409)) {
+    const error = new Error("Ese correo o cédula ya está registrado en otra cuenta.");
+    error.status = 409;
+    throw error;
+  }
   return {
     id: 100,
     total: 12.5,
@@ -153,6 +158,22 @@ describe("API MediFast RDA 3", () => {
     expect(response.status).toBe(201);
     expect(response.body.data.pagos[0].tarjetaUltimos4).toBe("1111");
     expect(createPedidoMock).toHaveBeenCalled();
+  });
+
+  test("checkout con correo o cedula de otra cuenta devuelve 409 limpio", async () => {
+    const response = await request(app)
+      .post("/api/pedidos")
+      .set("Authorization", `Bearer ${userToken}`)
+      .send({
+        items: [{ productoId: 409, cantidad: 1 }],
+        pago: { metodo: "Efectivo" },
+        cliente: { nombres: "Ana Perez", apellidos: "Perez", cedula: "1234567890", telefono: "0991234567", email: "otro@example.com" },
+        direccion: { ciudad: "Quito", direccion: "Av. Principal 123" }
+      });
+
+    expect(response.status).toBe(409);
+    expect(response.body.message).toBe("Ese correo o cédula ya está registrado en otra cuenta. Verifique los datos.");
+    expect(response.body.message).not.toMatch(/prisma|Unique|dbo\.Cliente/i);
   });
 
   test("usuario comun no puede cambiar estado de pedido", async () => {

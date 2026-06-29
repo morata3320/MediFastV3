@@ -7,6 +7,20 @@ import {
 
 import { success, created, fail } from "../../vista/respuestas.js";
 
+function respuestaErrorPedido(error) {
+  if (error?.status === 409 || /P2002|Unique constraint failed|dbo\.Cliente/i.test(String(error?.message || ""))) {
+    return {
+      status: 409,
+      message: "Ese correo o cédula ya está registrado en otra cuenta. Verifique los datos."
+    };
+  }
+
+  return {
+    status: 400,
+    message: error.message || "No se pudo registrar el pedido"
+  };
+}
+
 export async function postPedido(req, res, _next) {
   try {
     const { items, pago, cliente, direccion } = req.body || {};
@@ -23,7 +37,8 @@ export async function postPedido(req, res, _next) {
       "Pedido registrado correctamente"
     );
   } catch (error) {
-    return fail(res, error.message || "No se pudo registrar el pedido", 400);
+    const cleanError = respuestaErrorPedido(error);
+    return fail(res, cleanError.message, cleanError.status);
   }
 }
 

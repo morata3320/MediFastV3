@@ -29,7 +29,8 @@ export const validateRegister = [
     .normalizeEmail(),
   body("password")
     .isString().withMessage("password debe ser texto")
-    .isLength({ min: 6 }).withMessage("password debe tener minimo 6 caracteres"),
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/)
+    .withMessage("La contraseña debe tener minimo 8 caracteres e incluir mayuscula, minuscula, numero y simbolo"),
   handleValidation
 ];
 

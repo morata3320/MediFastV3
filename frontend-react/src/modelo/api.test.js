@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { ApiError, getCurrentUser, getToken, logoutSession, productosApi, saveSession, usuariosApi } from "./api.js";
+import { ApiError, getCurrentUser, getToken, logoutSession, pedidosApi, productosApi, saveSession, usuariosApi } from "./api.js";
 
 function storageMock() {
   const values = new Map();
@@ -64,6 +64,21 @@ describe("sesión de MediFast", () => {
     await expect(productosApi.listar()).rejects.toMatchObject({
       status: 0,
       message: "No se pudo conectar con el servidor. Verifique que la API esté activa."
+    });
+  });
+
+  test("propaga 409 de checkout con mensaje limpio", async () => {
+    vi.stubGlobal("localStorage", storageMock());
+    saveSession({ token: "jwt-de-prueba", user: { id: 2, username: "user", role: "user" } });
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: false,
+      status: 409,
+      json: async () => ({ message: "Ese correo o cédula ya está registrado en otra cuenta. Verifique los datos." })
+    })));
+
+    await expect(pedidosApi.crear([], { metodo: "Efectivo" }, {}, {})).rejects.toMatchObject({
+      status: 409,
+      message: "Ese correo o cédula ya está registrado en otra cuenta. Verifique los datos."
     });
   });
 });

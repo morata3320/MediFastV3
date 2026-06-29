@@ -9,6 +9,7 @@ function imgSrc(imagen) {
 const stockOf = (producto) => Number(producto.stockActual ?? producto.stock ?? 0);
 const priceOf = (producto) => Number(producto.precio ?? producto.precioVenta ?? 0);
 const requiredProductFields = ["nombre", "categoriaId", "precio", "stock", "descripcion"];
+const passwordHelp = "La contraseña debe tener mínimo 8 caracteres e incluir mayúscula, minúscula, número y símbolo.";
 
 function decimalValue(value) {
   if (typeof value === "number") return value;
@@ -22,6 +23,14 @@ function productFieldInvalid(form, field) {
   if (field === "precio") return Number.isNaN(decimalValue(value)) || decimalValue(value) < 0;
   if (field === "stock") return !Number.isInteger(Number(value)) || Number(value) < 0;
   return false;
+}
+
+function passwordMeetsRequirements(value) {
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(String(value || ""));
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 export function Header({ user, busqueda, setBusqueda, cart, setCartOpen, theme, toggleTheme, logoutUser }) {
@@ -49,45 +58,75 @@ export function CartDrawer({ open, setOpen, cart, totals, cambiarCantidad, quita
 
 export function AuthModal({ mode, setAuthMode, loginUser, registerUser, submitting }) {
   const [form, setForm] = useState({ identifier: "", username: "", email: "", password: "" });
+  const [touched, setTouched] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   if (!mode) return null;
   const isLogin = mode === "login";
-  async function submit(event) { event.preventDefault(); if (isLogin) await loginUser(form.identifier, form.password); else await registerUser(form.username, form.email, form.password); }
-  return <div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true"><button className="modal-close" onClick={() => setAuthMode(null)}>Cerrar</button><h2>{isLogin ? "Iniciar sesión" : "Crear cuenta"}</h2><form onSubmit={submit}>{isLogin ? <div className="field"><label>Usuario o correo</label><input required value={form.identifier} onChange={(event) => setForm({ ...form, identifier: event.target.value })} /></div> : <><div className="field"><label>Usuario</label><input required value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div><div className="field"><label>Correo</label><input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div></>}<div className="field"><label>Contraseña</label><input required type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></div><button className="btn-full" disabled={submitting} type="submit">{submitting ? "Procesando..." : isLogin ? "Entrar" : "Registrarme"}</button></form></section></div>;
+  const passwordInvalid = !isLogin && (submitted || touched.password) && !passwordMeetsRequirements(form.password);
+  async function submit(event) { event.preventDefault(); setSubmitted(true); if (!isLogin && !passwordMeetsRequirements(form.password)) return; if (isLogin) await loginUser(form.identifier, form.password); else await registerUser(form.username, form.email, form.password); }
+  return <div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true"><button className="modal-close" onClick={() => setAuthMode(null)}>Cerrar</button><h2>{isLogin ? "Iniciar sesión" : "Crear cuenta"}</h2><form onSubmit={submit}>{isLogin ? <div className="field"><label>Usuario o correo</label><input required value={form.identifier} onChange={(event) => setForm({ ...form, identifier: event.target.value })} /></div> : <><div className="field"><label>Usuario</label><input required value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div><div className="field"><label>Correo</label><input required type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div></>}<div className="field"><label>Contraseña</label><input required type="password" value={form.password} onBlur={() => setTouched({ ...touched, password: true })} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-describedby={!isLogin ? "modal-password-help" : undefined} aria-invalid={passwordInvalid} />{!isLogin && <small className="field-help" id="modal-password-help">{passwordHelp}</small>}{passwordInvalid && <small className="field-error">La contraseña no cumple los requisitos de seguridad.</small>}</div><button className="btn-full" disabled={submitting} type="submit">{submitting ? "Procesando..." : isLogin ? "Entrar" : "Registrarme"}</button></form></section></div>;
 }
 
 export function AuthPage({ mode = "login", loginUser, registerUser, submitting, onSuccess }) {
   const [form, setForm] = useState({ identifier: "", username: "", email: "", password: "" });
+  const [touched, setTouched] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   const isLogin = mode !== "register";
+  const passwordInvalid = !isLogin && (submitted || touched.password) && !passwordMeetsRequirements(form.password);
 
   async function submit(event) {
     event.preventDefault();
+    setSubmitted(true);
+    if (!isLogin && !passwordMeetsRequirements(form.password)) return;
     const ok = isLogin
       ? await loginUser(form.identifier, form.password)
       : await registerUser(form.username, form.email, form.password);
     if (ok && onSuccess) onSuccess();
   }
 
-  return <main className="container auth-page"><section className="modal auth-card"><div className="auth-card-head"><span className="auth-kicker">MediFast</span><h2>{isLogin ? "Iniciar sesión" : "Crear cuenta"}</h2><p className="hint">{isLogin ? "Ingrese sus credenciales para acceder a su cuenta." : "Complete sus datos para registrar una cuenta."}</p></div><form className="auth-form" onSubmit={submit}>{isLogin ? <div className="field"><label>Usuario o correo</label><input required autoComplete="username" value={form.identifier} onChange={(event) => setForm({ ...form, identifier: event.target.value })} /></div> : <><div className="field"><label>Usuario</label><input required autoComplete="username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div><div className="field"><label>Correo</label><input required autoComplete="email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div></>}<div className="field"><label>Contraseña</label><input required autoComplete={isLogin ? "current-password" : "new-password"} type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /></div><button className="btn-full auth-submit" disabled={submitting} type="submit">{submitting ? "Procesando..." : isLogin ? "Entrar" : "Registrarme"}</button></form><p className="auth-note">{isLogin ? "Acceso exclusivo para usuarios registrados." : <Link to="/login">Ya tengo cuenta</Link>}</p></section></main>;
+  return <main className="container auth-page"><section className="modal auth-card"><div className="auth-card-head"><span className="auth-kicker">MediFast</span><h2>{isLogin ? "Iniciar sesión" : "Crear cuenta"}</h2><p className="hint">{isLogin ? "Ingrese sus credenciales para acceder a su cuenta." : "Complete sus datos para registrar una cuenta."}</p></div><form className="auth-form" onSubmit={submit}>{isLogin ? <div className="field"><label>Usuario o correo</label><input required autoComplete="username" value={form.identifier} onChange={(event) => setForm({ ...form, identifier: event.target.value })} /></div> : <><div className="field"><label>Usuario</label><input required autoComplete="username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} /></div><div className="field"><label>Correo</label><input required autoComplete="email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div></>}<div className="field"><label>Contraseña</label><input required autoComplete={isLogin ? "current-password" : "new-password"} type="password" value={form.password} onBlur={() => setTouched({ ...touched, password: true })} onChange={(event) => setForm({ ...form, password: event.target.value })} aria-describedby={!isLogin ? "password-help" : undefined} aria-invalid={passwordInvalid} />{!isLogin && <small className="field-help" id="password-help">{passwordHelp}</small>}{passwordInvalid && <small className="field-error">La contraseña no cumple los requisitos de seguridad.</small>}</div><button className="btn-full auth-submit" disabled={submitting} type="submit">{submitting ? "Procesando..." : isLogin ? "Entrar" : "Registrarme"}</button></form><p className="auth-note">{isLogin ? "Acceso exclusivo para usuarios registrados." : <Link to="/login">Ya tengo cuenta</Link>}</p></section></main>;
 }
 
-export function CheckoutModal({ open, setCheckoutOpen, totals, confirmarPedido, submitting }) {
-  const initialForm = { nombres: "", apellidos: "", email: "", telefono: "", cedula: "", ciudad: "", direccion: "", referencia: "", metodo: "Efectivo", comprobante: "", tarjeta: "", vencimiento: "", cvv: "" };
+export function CheckoutModal({ open, user, setCheckoutOpen, totals, confirmarPedido, submitting }) {
+  const sessionEmail = user?.email || "";
+  const initialForm = { nombres: "", apellidos: "", email: sessionEmail, telefono: "", cedula: "", ciudad: "", direccion: "", referencia: "", metodo: "Efectivo", comprobante: "", tarjeta: "", vencimiento: "", cvv: "" };
   const [form, setForm] = useState(initialForm); const [errors, setErrors] = useState({});
+  const [useAccountEmail, setUseAccountEmail] = useState(true);
   if (!open) return null;
-  function update(field, value) { if (["telefono", "cedula", "tarjeta", "cvv"].includes(field)) value = onlyDigits(value); if (field === "tarjeta") value = value.slice(0, 16); if (field === "cedula") value = value.slice(0, 10); if (field === "cvv") value = value.slice(0, 4); if (field === "vencimiento") value = formatExpiry(value); setForm({ ...form, [field]: value }); }
-  async function submit(event) { event.preventDefault(); const nextErrors = validateCheckout(form); setErrors(nextErrors); if (Object.keys(nextErrors).length) return; const pedido = await confirmarPedido({ cliente: { nombres: form.nombres, apellidos: form.apellidos, cedula: form.cedula, telefono: form.telefono, email: form.email || undefined }, direccion: { ciudad: form.ciudad, direccion: form.direccion, referencia: form.referencia || undefined }, pago: { metodo: form.metodo, comprobante: form.comprobante || undefined, tarjeta: form.tarjeta || undefined, vencimiento: form.vencimiento || undefined, cvv: form.cvv || undefined } }); if (pedido) setForm(initialForm); }
+  const checkoutForm = useAccountEmail ? { ...form, email: sessionEmail } : form;
+  function update(field, value) { if (field === "email" && useAccountEmail) return; if (["telefono", "cedula", "tarjeta", "cvv"].includes(field)) value = onlyDigits(value); if (field === "tarjeta") value = value.slice(0, 16); if (field === "cedula") value = value.slice(0, 10); if (field === "cvv") value = value.slice(0, 4); if (field === "vencimiento") value = formatExpiry(value); setForm({ ...form, [field]: value }); }
+  function toggleAccountEmail(checked) {
+    setUseAccountEmail(checked);
+    setErrors((current) => ({ ...current, email: undefined }));
+    if (checked && sessionEmail) setForm({ ...form, email: sessionEmail });
+  }
+  async function submit(event) {
+    event.preventDefault();
+    const nextErrors = validateCheckout(checkoutForm);
+    if (useAccountEmail && sessionEmail && normalizeEmail(checkoutForm.email) !== normalizeEmail(sessionEmail)) {
+      nextErrors.email = "El correo debe coincidir con el de su cuenta.";
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).filter((key) => nextErrors[key]).length) return;
+    if (!useAccountEmail && sessionEmail && checkoutForm.email && normalizeEmail(checkoutForm.email) !== normalizeEmail(sessionEmail)) {
+      const continuar = window.confirm("El correo ingresado es diferente al correo de su cuenta. ¿Desea continuar con este correo de contacto?");
+      if (!continuar) return;
+    }
+    const pedido = await confirmarPedido({ cliente: { nombres: checkoutForm.nombres, apellidos: checkoutForm.apellidos, cedula: checkoutForm.cedula, telefono: checkoutForm.telefono, email: checkoutForm.email || undefined }, direccion: { ciudad: checkoutForm.ciudad, direccion: checkoutForm.direccion, referencia: checkoutForm.referencia || undefined }, pago: { metodo: checkoutForm.metodo, comprobante: checkoutForm.comprobante || undefined, tarjeta: checkoutForm.tarjeta || undefined, vencimiento: checkoutForm.vencimiento || undefined, cvv: checkoutForm.cvv || undefined } });
+    if (pedido) setForm({ ...initialForm, email: useAccountEmail ? sessionEmail : "" });
+  }
   const fields = [["nombres", "Nombres *"], ["apellidos", "Apellidos"], ["email", "Correo"], ["telefono", "Teléfono *"], ["cedula", "Cédula *"], ["ciudad", "Ciudad *"], ["direccion", "Dirección *"], ["referencia", "Referencia de entrega"]];
   const checkoutMeta = {
     nombres: { placeholder: "Ej. Mateo" },
     apellidos: { placeholder: "Ej. Morales" },
-    email: { placeholder: "Ej. correo@ejemplo.com" },
+    email: { placeholder: "Ej. correo@ejemplo.com", helper: useAccountEmail ? "Use el correo de su cuenta o indique un correo de contacto para este pedido." : "El correo ingresado será usado solo como contacto para este pedido." },
     telefono: { placeholder: "Ej. 09XXXXXXXX" },
     cedula: { placeholder: "Ej. 0102030405", helper: "Ingrese 10 dígitos." },
     ciudad: { placeholder: "Ej. Quito" },
     direccion: { placeholder: "Ej. Av. Amazonas y Naciones Unidas" },
     referencia: { placeholder: "Ej. Casa azul frente a la farmacia" }
   };
-  return <div className="modal-backdrop"><section className="modal modal-wide" role="dialog" aria-modal="true"><button className="modal-close" onClick={() => setCheckoutOpen(false)}>Cerrar</button><h2>Confirmar pedido</h2><p>Total a pagar: <strong>${totals.total.toFixed(2)}</strong></p><form onSubmit={submit} className="checkout-form"><h3>Datos de entrega</h3><div className="checkout-grid">{fields.map(([field, label]) => <div className="field" key={field}><label>{label}</label><input value={form[field]} placeholder={checkoutMeta[field]?.placeholder} maxLength={field === "cedula" ? 10 : undefined} inputMode={["telefono", "cedula"].includes(field) ? "numeric" : undefined} aria-describedby={checkoutMeta[field]?.helper ? `checkout-${field}-help` : undefined} onChange={(event) => update(field, event.target.value)} aria-invalid={Boolean(errors[field])} />{checkoutMeta[field]?.helper && <small className="field-help" id={`checkout-${field}-help`}>{checkoutMeta[field].helper}</small>}{errors[field] && <small className="field-error">{errors[field]}</small>}</div>)}</div><h3>Pago</h3><div className="field"><label>Método de pago *</label><select value={form.metodo} onChange={(event) => update("metodo", event.target.value)}><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select></div>{form.metodo === "Tarjeta" && <div className="checkout-grid">{[["tarjeta", "Número de tarjeta"], ["vencimiento", "Vencimiento"], ["cvv", "CVV"]].map(([field, label]) => <div className="field" key={field}><label>{label} *</label><input value={field === "tarjeta" ? formatCardNumber(form.tarjeta) : form[field]} inputMode="numeric" maxLength={field === "tarjeta" ? 19 : field === "vencimiento" ? 5 : 4} placeholder={field === "tarjeta" ? "0000 0000 0000 0000" : field === "vencimiento" ? "MM/AA" : "123"} onChange={(event) => update(field, event.target.value)} aria-invalid={Boolean(errors[field])} />{field === "vencimiento" && <small className="field-help">Formato MM/AA.</small>}{errors[field] && <small className="field-error">{errors[field]}</small>}</div>)}</div>}{form.metodo === "Transferencia" && <div className="field"><label>Comprobante o referencia *</label><input value={form.comprobante} placeholder="Ej. TRX-2026-001245" onChange={(event) => update("comprobante", event.target.value)} aria-invalid={Boolean(errors.comprobante)} />{errors.comprobante && <small className="field-error">{errors.comprobante}</small>}</div>}<button className="btn-full" type="submit" disabled={submitting}>{submitting ? "Registrando pedido..." : "Confirmar pedido"}</button></form></section></div>;
+  return <div className="modal-backdrop"><section className="modal modal-wide" role="dialog" aria-modal="true"><button className="modal-close" onClick={() => setCheckoutOpen(false)}>Cerrar</button><h2>Confirmar pedido</h2><p>Total a pagar: <strong>${totals.total.toFixed(2)}</strong></p><form onSubmit={submit} className="checkout-form"><h3>Datos de entrega</h3><label className="check checkout-email-check"><input type="checkbox" checked={useAccountEmail} onChange={(event) => toggleAccountEmail(event.target.checked)} /><span>Usar correo de mi cuenta para este pedido</span></label><div className="checkout-grid">{fields.map(([field, label]) => <div className="field" key={field}><label>{label}</label><input value={field === "email" && useAccountEmail ? sessionEmail : form[field]} disabled={field === "email" && useAccountEmail} placeholder={checkoutMeta[field]?.placeholder} maxLength={field === "cedula" ? 10 : undefined} inputMode={["telefono", "cedula"].includes(field) ? "numeric" : undefined} aria-describedby={checkoutMeta[field]?.helper ? `checkout-${field}-help` : undefined} onChange={(event) => update(field, event.target.value)} aria-invalid={Boolean(errors[field])} />{checkoutMeta[field]?.helper && <small className="field-help" id={`checkout-${field}-help`}>{checkoutMeta[field].helper}</small>}{errors[field] && <small className="field-error">{errors[field]}</small>}</div>)}</div><h3>Pago</h3><div className="field"><label>Método de pago *</label><select value={form.metodo} onChange={(event) => update("metodo", event.target.value)}><option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option></select></div>{form.metodo === "Tarjeta" && <div className="checkout-grid">{[["tarjeta", "Número de tarjeta"], ["vencimiento", "Vencimiento"], ["cvv", "CVV"]].map(([field, label]) => <div className="field" key={field}><label>{label} *</label><input value={field === "tarjeta" ? formatCardNumber(form.tarjeta) : form[field]} inputMode="numeric" maxLength={field === "tarjeta" ? 19 : field === "vencimiento" ? 5 : 4} placeholder={field === "tarjeta" ? "0000 0000 0000 0000" : field === "vencimiento" ? "MM/AA" : "123"} onChange={(event) => update(field, event.target.value)} aria-invalid={Boolean(errors[field])} />{field === "vencimiento" && <small className="field-help">Formato MM/AA.</small>}{errors[field] && <small className="field-error">{errors[field]}</small>}</div>)}</div>}{form.metodo === "Transferencia" && <div className="field"><label>Comprobante o referencia *</label><input value={form.comprobante} placeholder="Ej. TRX-2026-001245" onChange={(event) => update("comprobante", event.target.value)} aria-invalid={Boolean(errors.comprobante)} />{errors.comprobante && <small className="field-error">{errors.comprobante}</small>}</div>}<button className="btn-full" type="submit" disabled={submitting}>{submitting ? "Registrando pedido..." : "Confirmar pedido"}</button></form></section></div>;
 }
 
 export function AdminPanel({ open, setAdminOpen, productos, categorias, pedidos, usuarios, roles, guardarProductoAdmin, eliminarProductoAdmin, cambiarRolUsuario, cambiarEstadoPedido }) {

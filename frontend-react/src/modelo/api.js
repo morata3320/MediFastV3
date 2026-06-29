@@ -61,6 +61,7 @@ async function request(path, { method = "GET", body, headers = {} } = {}) {
       400: "Revise los datos enviados.",
       401: "Su sesión no es válida. Inicie sesión nuevamente.",
       403: "No tiene permisos para esta acción.",
+      409: "Ese correo o cédula ya está registrado en otra cuenta. Verifique los datos.",
       500: "El servidor no pudo completar la solicitud."
     };
     throw new ApiError(payload.message || messages[response.status] || "No se pudo completar la solicitud.", response.status, payload.errors);

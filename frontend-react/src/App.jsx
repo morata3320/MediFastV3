@@ -36,7 +36,7 @@ function CatalogPage({ controller, navigate }) {
 
 function CheckoutPage({ controller }) {
   const navigate = useNavigate();
-  return <CheckoutModal open setCheckoutOpen={() => navigate("/")} totals={controller.totals} confirmarPedido={async (checkout) => { const pedido = await controller.confirmarPedido(checkout); if (pedido) navigate("/", { replace: true }); return pedido; }} submitting={controller.isSubmitting} />;
+  return <CheckoutModal open user={controller.user} setCheckoutOpen={() => navigate("/")} totals={controller.totals} confirmarPedido={async (checkout) => { const pedido = await controller.confirmarPedido(checkout); if (pedido) navigate("/", { replace: true }); return pedido; }} submitting={controller.isSubmitting} />;
 }
 
 function AdminPage({ controller }) {

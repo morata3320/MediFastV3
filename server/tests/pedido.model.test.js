@@ -8,8 +8,8 @@ const tx = {
   tipoMovimientoInventario: { findUnique: jest.fn() },
   estadoPedido: { findUnique: jest.fn() },
   metodoPago: { findUnique: jest.fn() },
-  usuario: { findUnique: jest.fn() },
-  cliente: { create: jest.fn(), update: jest.fn() },
+  usuario: { findUnique: jest.fn(), findFirst: jest.fn() },
+  cliente: { create: jest.fn(), update: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn() },
   direccionCliente: { create: jest.fn() },
   pedido: { create: jest.fn(), findUnique: jest.fn() },
   movimientoInventario: { create: jest.fn() },
@@ -31,6 +31,9 @@ function prepararTransaccion() {
   tx.estadoPedido.findUnique.mockResolvedValue({ id: 1, nombre: "Pendiente" });
   tx.metodoPago.findUnique.mockResolvedValue({ id: 2, nombre: "Tarjeta" });
   tx.usuario.findUnique.mockResolvedValue({ id: 2, email: "user@example.com", cliente: null });
+  tx.usuario.findFirst.mockResolvedValue(null);
+  tx.cliente.findUnique.mockResolvedValue(null);
+  tx.cliente.findFirst.mockResolvedValue(null);
   tx.cliente.create.mockResolvedValue({ id: 8 });
   tx.direccionCliente.create.mockResolvedValue({ id: 9 });
   tx.pedido.create.mockResolvedValue({ id: 20 });
@@ -71,5 +74,49 @@ describe("createPedido", () => {
 
     await expect(createPedido(2, [{ productoId: 5, cantidad: 2 }], { metodo: "Efectivo" })).rejects.toThrow("Stock insuficiente");
     expect(tx.producto.updateMany).not.toHaveBeenCalled();
+  });
+
+  test("checkout repetido del mismo usuario reutiliza cliente sin conflicto", async () => {
+    prepararTransaccion();
+    tx.usuario.findUnique.mockResolvedValue({
+      id: 2,
+      email: "user@example.com",
+      cliente: { id: 8, usuarioId: 2, cedula: "1234567890", email: "user@example.com" }
+    });
+    tx.cliente.findUnique.mockResolvedValue({ id: 8, usuarioId: 2, cedula: "1234567890", email: "user@example.com" });
+    tx.cliente.update.mockResolvedValue({ id: 8, usuarioId: 2 });
+
+    await createPedido(
+      2,
+      [{ productoId: 5, cantidad: 1 }],
+      { metodo: "Efectivo" },
+      {
+        cliente: { nombres: "Ana Perez", apellidos: "Perez", cedula: "1234567890", telefono: "0991234567", email: "user@example.com" },
+        direccion: { ciudad: "Quito", direccion: "Av. Principal 123" }
+      }
+    );
+
+    expect(tx.cliente.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 8 },
+      data: expect.objectContaining({ email: "user@example.com", cedula: "1234567890" })
+    }));
+  });
+
+  test("checkout con cedula de otro cliente devuelve conflicto limpio", async () => {
+    prepararTransaccion();
+    tx.cliente.findUnique.mockResolvedValue({ id: 99, usuarioId: 7, cedula: "1234567890", email: "otro@example.com" });
+
+    await expect(createPedido(
+      2,
+      [{ productoId: 5, cantidad: 1 }],
+      { metodo: "Efectivo" },
+      {
+        cliente: { nombres: "Ana Perez", apellidos: "Perez", cedula: "1234567890", telefono: "0991234567", email: "user@example.com" },
+        direccion: { ciudad: "Quito", direccion: "Av. Principal 123" }
+      }
+    )).rejects.toMatchObject({
+      status: 409,
+      message: "Ese correo o cédula ya está registrado en otra cuenta."
+    });
   });
 });

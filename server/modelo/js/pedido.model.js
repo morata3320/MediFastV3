@@ -19,6 +19,49 @@ const pedidoInclude = {
   pagos: { include: { metodoPago: true } }
 };
 
+export class PedidoConflictError extends Error {
+  constructor(message = "Ese correo o cédula ya está registrado en otra cuenta.") {
+    super(message);
+    this.name = "PedidoConflictError";
+    this.status = 409;
+  }
+}
+
+function normalizarCorreo(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+function esErrorUnicoPrisma(error) {
+  return error?.code === "P2002" || /Unique constraint failed|dbo\.Cliente/i.test(String(error?.message || ""));
+}
+
+async function validarConflictosCliente(tx, userId, clienteActual, datosCliente) {
+  const usuarioId = Number(userId);
+
+  if (datosCliente.cedula) {
+    const clienteConCedula = await tx.cliente.findUnique({ where: { cedula: datosCliente.cedula } });
+    if (clienteConCedula && clienteConCedula.usuarioId !== usuarioId && clienteConCedula.id !== clienteActual?.id) {
+      throw new PedidoConflictError();
+    }
+  }
+
+  if (datosCliente.email) {
+    const correo = normalizarCorreo(datosCliente.email);
+    const otroUsuario = await tx.usuario.findFirst({ where: { email: correo, id: { not: usuarioId } } });
+    if (otroUsuario) throw new PedidoConflictError();
+
+    const otroCliente = await tx.cliente.findFirst({
+      where: {
+        email: correo,
+        usuarioId: { not: usuarioId }
+      }
+    });
+    if (otroCliente && otroCliente.id !== clienteActual?.id) throw new PedidoConflictError();
+  }
+
+  return true;
+}
+
 async function guardarDatosCliente(tx, userId, cliente, direccion) {
   if (!cliente && !direccion) return { clienteId: null, direccionClienteId: null };
 
@@ -32,8 +75,9 @@ async function guardarDatosCliente(tx, userId, cliente, direccion) {
       apellidos: cliente.apellidos || "No especificado",
       cedula: cliente.cedula || null,
       telefono: cliente.telefono || null,
-      email: cliente.email || usuario.email
+      email: normalizarCorreo(cliente.email || usuario.email)
     };
+    await validarConflictosCliente(tx, userId, clienteRegistrado, datosCliente);
     clienteRegistrado = clienteRegistrado
       ? await tx.cliente.update({ where: { id: clienteRegistrado.id }, data: datosCliente })
       : await tx.cliente.create({ data: { ...datosCliente, usuarioId: Number(userId) } });
@@ -65,7 +109,8 @@ export async function createPedido(userId, items, pago = {}, datosCheckout = {})
   const normalizados = normalizarItems(items);
   if (!normalizados.length) throw new Error("El pedido no contiene productos.");
 
-  return prisma.$transaction(async (tx) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
     const productos = await tx.producto.findMany({ where: { id: { in: normalizados.map((i) => i.productoId) }, activo: true } });
     if (productos.length !== normalizados.length) throw new Error("Uno o mas productos no existen o no estan disponibles.");
     const tipoSalida = await tx.tipoMovimientoInventario.findUnique({ where: { nombre: "SALIDA_VENTA" } });
@@ -110,7 +155,12 @@ export async function createPedido(userId, items, pago = {}, datosCheckout = {})
       estado: pago.estado || "Pendiente"
     }});
     return tx.pedido.findUnique({ where: { id: pedido.id }, include: pedidoInclude });
-  });
+    });
+  } catch (error) {
+    if (error instanceof PedidoConflictError) throw error;
+    if (esErrorUnicoPrisma(error)) throw new PedidoConflictError();
+    throw error;
+  }
 }
 export async function findPedidosByUser(userId) {
   return prisma.pedido.findMany({ where: { usuarioId: Number(userId) }, orderBy: { createdAt: "desc" }, include: pedidoInclude });
