@@ -565,10 +565,39 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   align-items: center;
 }
 
-.checkout-email-check {
-  background: var(--button-soft);
-  border-radius: .75rem;
-  padding: .75rem .9rem;
+.account-email-option {
+  width: 100%;
+  margin: .35rem 0 .65rem;
+}
+
+.account-email-check {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: .75rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: .75rem .95rem;
+  border: 1px solid rgba(4, 120, 87, .25);
+  border-radius: 14px;
+  background: rgba(4, 120, 87, .08);
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.account-email-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: #047857;
+  cursor: pointer;
+}
+
+.account-email-text {
+  display: inline-block;
+  font-size: .98rem;
 }
 
 .product-form-card {
@@ -731,6 +760,16 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   .checkbox-row,
   .order-summary {
     grid-template-columns: 1fr;
+  }
+
+  .account-email-check {
+    width: 100%;
+    padding: .72rem .85rem;
+    gap: .65rem;
+  }
+
+  .account-email-text {
+    font-size: .92rem;
   }
 }
 /* Ajuste de header React */
@@ -913,6 +952,12 @@ body.theme-dark .totals {
 }
 
 body.theme-dark .totals h3 {
+  color: var(--text);
+}
+
+body.theme-dark .account-email-check {
+  border-color: rgba(110, 231, 183, .22);
+  background: rgba(110, 231, 183, .08);
   color: var(--text);
 }
 
