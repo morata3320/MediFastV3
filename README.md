@@ -2,11 +2,18 @@
 
 MediFastV3 es una farmacia online construida como aplicación cliente-servidor. El frontend final es React + Vite y consume una API REST en Node.js/Express. La solución incluye autenticación JWT, roles, catálogo, carrito, checkout, pagos, control de stock e inventario.
 
+- Frontend final: `frontend-react/`.
+- Backend: `server/`.
+- Frontend desplegado: [https://medi-fast-v3.vercel.app](https://medi-fast-v3.vercel.app/).
+- Backend desplegado: [https://medifastv3.onrender.com](https://medifastv3.onrender.com/).
+- API productos: [https://medifastv3.onrender.com/api/productos](https://medifastv3.onrender.com/api/productos).
+- Base de datos: Google Cloud SQL Server.
+
 ## Tecnologías
 
 - Frontend: React 19, Vite, CSS propio, ESLint y Vitest.
 - Backend: Node.js, Express, Prisma ORM, Jest, Supertest y ESLint.
-- Base de datos: SQL Server.
+- Base de datos: Google Cloud SQL Server en producción y SQL Server local para desarrollo.
 - Seguridad: JWT, bcrypt, Helmet, CORS restringido, rate limiting, express-validator y sanitización XSS.
 
 ## Arquitectura MVC
@@ -71,6 +78,7 @@ SQL Server se accede exclusivamente mediante Prisma. El modelo incluye `Rol`, `U
 ### 1. Base de datos y backend
 
 Copie `server/.env.example` como `server/.env` y reemplace los marcadores de SQL Server y JWT. No suba este archivo al repositorio.
+El archivo `.env` real no se sube al repositorio. `server/.env.example` es solo una referencia segura sin credenciales reales.
 
 ```powershell
 cd C:\Users\NW\Desktop\MediFastV3\server
@@ -123,6 +131,8 @@ Consulte [server/.env.example](server/.env.example). Las variables requeridas so
 | `JWT_SECRET` | Secreto de firma JWT; debe cambiarse en producción. |
 | `JWT_EXPIRES_IN` | Vigencia del token. |
 
+En producción, Render debe recibir estas variables desde su panel de entorno. Vercel debe configurar `VITE_API_URL=https://medifastv3.onrender.com`.
+
 ## Usuarios de prueba
 
 Solo para desarrollo y demostración tras ejecutar el seed:
@@ -153,7 +163,7 @@ No use estas credenciales en producción.
 ## Pruebas y calidad
 
 - Backend: 11 pruebas Jest/Supertest para login, autorización, validación, stock, pedido, pago e inventario.
-- Frontend: 7 pruebas Vitest para carrito, validaciones de checkout y sesión en `localStorage`.
+- Frontend: pruebas Vitest para carrito, validaciones de checkout, máscaras, sesión en `localStorage` y manejo de 401/403/red.
 - Verificación realizada: lint backend y frontend sin errores; build React exitoso.
 
 ## Estructura final recomendada
@@ -168,15 +178,13 @@ MediFastV3/
 └── server/.env.example
 ```
 
-`frontend/` se conserva como versión histórica. Para la entrega final utilice `frontend-react/` o renómbrelo a `frontend/` conservando su contenido React.
+La carpeta histórica `frontend/` fue retirada de la entrega. El frontend final es `frontend-react/`.
 
 ## Despliegue
 
-- Frontend: Vercel o Netlify. Configure `VITE_API_URL` con la URL pública del backend.
-- Backend: Render. Configure `NODE_ENV=production`, `CORS_ORIGIN`, `DATABASE_URL`, `JWT_SECRET` y `JWT_EXPIRES_IN`.
-- Base de datos: SQL Server local no es accesible desde la nube. Para producción se requiere una instancia SQL Server accesible públicamente de forma segura o mediante red privada, y actualizar `DATABASE_URL`.
-
-Mientras no exista esa base accesible, el despliegue soportado es local: backend en `localhost:3000`, frontend en `localhost:5173` y SQL Server local.
+- Frontend: Vercel con `VITE_API_URL=https://medifastv3.onrender.com`.
+- Backend: Render con `NODE_ENV=production`, `CORS_ORIGIN=https://medi-fast-v3.vercel.app`, `DATABASE_URL`, `JWT_SECRET` y `JWT_EXPIRES_IN`.
+- Base de datos: Google Cloud SQL Server accesible para Render mediante la cadena segura de `DATABASE_URL`.
 
 ## Evidencias y defensa
 

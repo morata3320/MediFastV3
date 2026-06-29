@@ -6,7 +6,13 @@ export function notFound(req, res, _next) {
 }
 
 export function errorHandler(err, req, res, _next) {
-  console.error("Error interno:", err.message);
+  console.error(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    path: req.originalUrl,
+    status: 500,
+    message: err.message || "Error interno del servidor"
+  }));
 
   const isDev = process.env.NODE_ENV === "development";
 

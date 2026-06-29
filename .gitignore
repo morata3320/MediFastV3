@@ -1,20 +1,25 @@
 # Dependencias
 node_modules/
+frontend-react/node_modules/
+server/node_modules/
 
 # Variables de entorno reales
 .env
 server/.env
+frontend-react/.env
 
 # Archivos temporales
 *.log
 npm-debug.log*
 .DS_Store
 Thumbs.db
+dist/
+frontend-react/dist/
 
 # Prisma / desarrollo local
-server/node_modules/
-server/.env
 server/.prisma/
+server/modelo/prisma/migrations_backup/
+server/modelo/prisma/migrations_backup_*/
 
 # Backups y scripts temporales
 _backup_reto1/

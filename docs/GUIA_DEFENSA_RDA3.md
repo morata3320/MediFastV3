@@ -42,12 +42,12 @@ Esta capa frontend no sustituye la seguridad real. Si alguien llama la API con P
 
 | Riesgo | Mitigación aplicada |
 | --- | --- |
-| Broken Access Control | JWT, middleware de autenticación, roles, rutas protegidas en React y controles backend 401/403. |
-| Identification and Authentication Failures | bcrypt, expiración JWT, cierre de sesión ante 401, mensajes controlados y rate limit para login/registro. |
-| Injection | Prisma, express-validator y sanitización XSS. |
-| Security Misconfiguration | Helmet, CORS configurable, `.env.example`, `.gitignore` y errores sin stack en producción. |
-| Cryptographic Failures | Secretos en variables de entorno y solo últimos cuatro dígitos de tarjeta persistidos. |
-| Security Logging and Monitoring Failures | Logger básico de solicitudes y errores controlados sin exponer secretos. |
+| Broken Access Control | Rutas protegidas en frontend, JWT obligatorio, roles `admin/user` en backend y respuestas 401/403. |
+| Identification and Authentication Failures | Login con bcrypt, token JWT requerido, expiración de sesión y rate limit en login/registro. |
+| Injection | Prisma ORM, express-validator, sanitización XSS y normalización de datos numéricos. |
+| Security Misconfiguration | Helmet, CORS restringido a Vercel mediante `CORS_ORIGIN`, variables de entorno y `.env` fuera del repo. |
+| Cryptographic Failures | Contraseñas con hash bcrypt, secretos en variables de entorno y no guardar tarjeta completa. |
+| Logging and Monitoring | Logger de requests y errores 4xx/5xx con timestamp, método, ruta, estado y mensaje sin tokens ni secretos. |
 
 ## Checkout, stock e inventario
 
