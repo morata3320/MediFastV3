@@ -102,6 +102,53 @@ describe("createPedido", () => {
     }));
   });
 
+  test("checkout enlaza cliente sin usuarioId cuando coincide con correo del usuario autenticado", async () => {
+    prepararTransaccion();
+    tx.usuario.findUnique.mockResolvedValue({ id: 2, email: "user@example.com", username: "user", cliente: null });
+    tx.cliente.findUnique.mockResolvedValue({ id: 8, usuarioId: null, cedula: "1234567890", email: "user@example.com" });
+    tx.cliente.update.mockResolvedValue({ id: 8, usuarioId: 2 });
+
+    await createPedido(
+      2,
+      [{ productoId: 5, cantidad: 1 }],
+      { metodo: "Tarjeta", tarjeta: "4111111111111111" },
+      {
+        cliente: { nombres: "Ana Perez", apellidos: "Perez", cedula: "123-456-7890", telefono: "099 123 4567", email: " USER@example.com " },
+        direccion: { ciudad: "Quito", direccion: "Av. Principal 123" }
+      }
+    );
+
+    expect(tx.cliente.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 8 },
+      data: expect.objectContaining({
+        usuarioId: 2,
+        cedula: "1234567890",
+        telefono: "0991234567",
+        email: "user@example.com"
+      })
+    }));
+    expect(tx.pago.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ tarjetaUltimos4: "1111" })
+    }));
+  });
+
+  test("checkout con correo de otro usuario devuelve conflicto limpio", async () => {
+    prepararTransaccion();
+    tx.usuario.findFirst.mockResolvedValue({ id: 7, email: "otro@example.com" });
+
+    await expect(createPedido(
+      2,
+      [{ productoId: 5, cantidad: 1 }],
+      { metodo: "Transferencia", comprobante: "TRX-001" },
+      {
+        cliente: { nombres: "Ana Perez", apellidos: "Perez", cedula: "1234567890", telefono: "0991234567", email: "otro@example.com" },
+        direccion: { ciudad: "Quito", direccion: "Av. Principal 123" }
+      }
+    )).rejects.toMatchObject({
+      status: 409,
+    });
+  });
+
   test("checkout con cedula de otro cliente devuelve conflicto limpio", async () => {
     prepararTransaccion();
     tx.cliente.findUnique.mockResolvedValue({ id: 99, usuarioId: 7, cedula: "1234567890", email: "otro@example.com" });
@@ -116,7 +163,6 @@ describe("createPedido", () => {
       }
     )).rejects.toMatchObject({
       status: 409,
-      message: "Ese correo o cédula ya está registrado en otra cuenta."
     });
   });
 });

@@ -31,35 +31,68 @@ function normalizarCorreo(email) {
   return String(email || "").trim().toLowerCase();
 }
 
+function normalizarCedula(cedula) {
+  const digits = String(cedula || "").replace(/\D/g, "").trim();
+  return digits || null;
+}
+
+function normalizarTelefono(telefono) {
+  const digits = String(telefono || "").replace(/\D/g, "").trim();
+  return digits || null;
+}
+
 function esErrorUnicoPrisma(error) {
   return error?.code === "P2002" || /Unique constraint failed|dbo\.Cliente/i.test(String(error?.message || ""));
 }
 
-async function validarConflictosCliente(tx, userId, clienteActual, datosCliente) {
+function clienteSinDuenioCompatible(clienteEncontrado, usuario, datosCliente) {
+  if (!clienteEncontrado || clienteEncontrado.usuarioId != null) return false;
+  const emailCliente = normalizarCorreo(clienteEncontrado.email);
+  const emailUsuario = normalizarCorreo(usuario.email);
+  const emailCheckout = normalizarCorreo(datosCliente.email);
+  return Boolean(emailCliente && (emailCliente === emailUsuario || emailCliente === emailCheckout || emailCheckout === emailUsuario));
+}
+
+async function resolverClienteParaUsuario(tx, userId, usuario, clienteActual, datosCliente) {
   const usuarioId = Number(userId);
+  let clienteObjetivo = clienteActual || null;
 
   if (datosCliente.cedula) {
     const clienteConCedula = await tx.cliente.findUnique({ where: { cedula: datosCliente.cedula } });
-    if (clienteConCedula && clienteConCedula.usuarioId !== usuarioId && clienteConCedula.id !== clienteActual?.id) {
-      throw new PedidoConflictError();
+    if (clienteConCedula) {
+      if (clienteConCedula.usuarioId && clienteConCedula.usuarioId !== usuarioId) {
+        throw new PedidoConflictError();
+      }
+      if (clienteConCedula.usuarioId === usuarioId) {
+        clienteObjetivo = clienteConCedula;
+      } else if (!clienteObjetivo && clienteSinDuenioCompatible(clienteConCedula, usuario, datosCliente)) {
+        clienteObjetivo = clienteConCedula;
+      } else if (clienteObjetivo?.id !== clienteConCedula.id) {
+        throw new PedidoConflictError();
+      }
     }
   }
 
   if (datosCliente.email) {
     const correo = normalizarCorreo(datosCliente.email);
-    const otroUsuario = await tx.usuario.findFirst({ where: { email: correo, id: { not: usuarioId } } });
-    if (otroUsuario) throw new PedidoConflictError();
+    const correoUsuario = normalizarCorreo(usuario.email);
+    if (correo !== correoUsuario) {
+      const otroUsuario = await tx.usuario.findFirst({ where: { email: correo, id: { not: usuarioId } } });
+      if (otroUsuario) throw new PedidoConflictError();
+    }
 
-    const otroCliente = await tx.cliente.findFirst({
-      where: {
-        email: correo,
-        usuarioId: { not: usuarioId }
+    const clienteConCorreo = await tx.cliente.findFirst({ where: { email: correo } });
+    if (clienteConCorreo) {
+      if (clienteConCorreo.usuarioId && clienteConCorreo.usuarioId !== usuarioId) {
+        throw new PedidoConflictError();
       }
-    });
-    if (otroCliente && otroCliente.id !== clienteActual?.id) throw new PedidoConflictError();
+      if (!clienteObjetivo && (clienteConCorreo.usuarioId === usuarioId || clienteSinDuenioCompatible(clienteConCorreo, usuario, datosCliente))) {
+        clienteObjetivo = clienteConCorreo;
+      }
+    }
   }
 
-  return true;
+  return clienteObjetivo;
 }
 
 async function guardarDatosCliente(tx, userId, cliente, direccion) {
@@ -73,13 +106,13 @@ async function guardarDatosCliente(tx, userId, cliente, direccion) {
     const datosCliente = {
       nombres: cliente.nombres,
       apellidos: cliente.apellidos || "No especificado",
-      cedula: cliente.cedula || null,
-      telefono: cliente.telefono || null,
+      cedula: normalizarCedula(cliente.cedula),
+      telefono: normalizarTelefono(cliente.telefono),
       email: normalizarCorreo(cliente.email || usuario.email)
     };
-    await validarConflictosCliente(tx, userId, clienteRegistrado, datosCliente);
+    clienteRegistrado = await resolverClienteParaUsuario(tx, userId, usuario, clienteRegistrado, datosCliente);
     clienteRegistrado = clienteRegistrado
-      ? await tx.cliente.update({ where: { id: clienteRegistrado.id }, data: datosCliente })
+      ? await tx.cliente.update({ where: { id: clienteRegistrado.id }, data: { ...datosCliente, usuarioId: Number(userId) } })
       : await tx.cliente.create({ data: { ...datosCliente, usuarioId: Number(userId) } });
   }
 
