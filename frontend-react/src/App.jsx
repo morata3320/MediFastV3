@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { useMediFastController } from "./controlador/useMediFastController.js";
@@ -69,6 +69,12 @@ function AdminPage({ controller }) {
 export default function App() {
   const c = useMediFastController();
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => localStorage.getItem("mf_theme") || "light");
+
+  useEffect(() => {
+    document.body.classList.toggle("theme-dark", theme === "dark");
+    localStorage.setItem("mf_theme", theme);
+  }, [theme]);
 
   return (
     <>
@@ -78,6 +84,8 @@ export default function App() {
         setBusqueda={c.setBusqueda}
         cart={c.cart}
         setCartOpen={c.setCartOpen}
+        theme={theme}
+        toggleTheme={() => setTheme((current) => current === "dark" ? "light" : "dark")}
         logoutUser={() => {
           c.logoutUser();
           navigate("/");

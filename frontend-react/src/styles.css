@@ -2,11 +2,41 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg: #f4f7f5;
+  --surface: #ffffff;
+  --surface-soft: #f9fcfa;
+  --surface-muted: #eef7f2;
+  --text: #10231c;
+  --muted: #415c50;
+  --border: #d5e3dc;
+  --input-border: #b7c9c0;
+  --primary: #007f5f;
+  --primary-dark: #005f46;
+  --button-soft: #dfece6;
+  --shadow: rgba(0,0,0,.2);
+}
+
+body.theme-dark {
+  --bg: #0f1b17;
+  --surface: #172822;
+  --surface-soft: #1d3029;
+  --surface-muted: #203a31;
+  --text: #eef7f2;
+  --muted: #b8cec4;
+  --border: #345047;
+  --input-border: #49685d;
+  --primary: #33b88f;
+  --primary-dark: #0f6c56;
+  --button-soft: #29463c;
+  --shadow: rgba(0,0,0,.45);
+}
+
 body {
   margin: 0;
   font-family: system-ui, Arial, sans-serif;
-  background: #f4f7f5;
-  color: #10231c;
+  background: var(--bg);
+  color: var(--text);
 }
 
 button {
@@ -28,7 +58,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .field-help { color: #526b60; font-size: .82rem; }
 .field-error { color: #b42318; font-size: .85rem; }
 .field input[aria-invalid="true"] { border-color: #b42318; background: #fff7f6; }
-.field select { width: 100%; padding: .7rem; border: 1px solid #b7c9c0; border-radius: .4rem; background: white; }
+.field select { width: 100%; padding: .7rem; border: 1px solid var(--input-border); border-radius: .4rem; background: var(--surface); color: var(--text); }
 .checkout-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
 .state-message { padding: 1rem; border-radius: .6rem; background: #eef7f2; color: #234338; }
 .state-error { background: #fff0ef; color: #8f1e14; }
@@ -40,7 +70,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   display: flex;
   justify-content: space-between;
   padding: .5rem 1.5rem;
-  background: #005f46;
+  background: var(--primary-dark);
   color: white;
   font-weight: 700;
 }
@@ -51,8 +81,8 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   gap: 1rem;
   align-items: center;
   padding: 1rem 1.5rem;
-  background: white;
-  border-bottom: 1px solid #d5e3dc;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .brand {
@@ -84,7 +114,9 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .search input {
   flex: 1;
   padding: .8rem;
-  border: 1px solid #b7c9c0;
+  border: 1px solid var(--input-border);
+  background: var(--surface);
+  color: var(--text);
 }
 
 .search button,
@@ -92,9 +124,26 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .authbar button,
 .btn-full {
   border: 0;
-  background: #007f5f;
+  background: var(--primary);
   color: white;
   padding: .8rem 1rem;
+  border-radius: .45rem;
+  font-weight: 800;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.theme-toggle {
+  border: 1px solid var(--border);
+  background: var(--button-soft);
+  color: var(--text);
+  padding: .7rem .9rem;
   border-radius: .45rem;
   font-weight: 800;
 }
@@ -104,7 +153,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   justify-content: flex-end;
   gap: .75rem;
   padding: .75rem 1.5rem;
-  background: #eef7f2;
+  background: var(--surface-muted);
 }
 
 .authbar a {
@@ -112,8 +161,8 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   align-items: center;
   border-radius: .45rem;
   padding: .55rem .8rem;
-  background: #dfece6;
-  color: #10231c;
+  background: var(--button-soft);
+  color: var(--text);
   font-weight: 800;
   text-decoration: none;
 }
@@ -139,9 +188,10 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 }
 
 .chips button {
-  border: 1px solid #b7c9c0;
+  border: 1px solid var(--input-border);
   border-radius: 999px;
-  background: white;
+  background: var(--surface);
+  color: var(--text);
   padding: .6rem 1rem;
 }
 
@@ -158,8 +208,8 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 
 .card {
   position: relative;
-  background: white;
-  border: 1px solid #d5e3dc;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: .75rem;
   overflow: hidden;
 }
@@ -168,7 +218,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   width: 100%;
   height: 180px;
   object-fit: contain;
-  background: #f8faf9;
+  background: var(--surface-soft);
 }
 
 .card-body {
@@ -181,7 +231,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 }
 
 .stock {
-  color: #415c50;
+  color: var(--muted);
 }
 
 .badge {
@@ -223,9 +273,9 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   right: 0;
   width: min(420px, 95vw);
   height: 100vh;
-  background: white;
+  background: var(--surface);
   z-index: 50;
-  box-shadow: -15px 0 40px rgba(0,0,0,.2);
+  box-shadow: -15px 0 40px var(--shadow);
   padding: 1rem;
   overflow: auto;
 }
@@ -240,7 +290,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .cart-item {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #d5e3dc;
+  border-bottom: 1px solid var(--border);
   padding: .8rem 0;
   gap: 1rem;
 }
@@ -286,7 +336,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 
 .modal {
   width: min(480px, 96vw);
-  background: white;
+  background: var(--surface);
   border-radius: 1rem;
   padding: 1.5rem;
   position: relative;
@@ -311,8 +361,10 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .modal textarea {
   width: 100%;
   padding: .7rem;
-  border: 1px solid #b7c9c0;
+  border: 1px solid var(--input-border);
   border-radius: .4rem;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .modal-close {
@@ -322,7 +374,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 }
 
 .hint {
-  color: #456157;
+  color: var(--muted);
   font-size: .9rem;
 }
 
@@ -397,12 +449,12 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   position: fixed;
   inset: 1rem;
   z-index: 70;
-  background: white;
+  background: var(--surface);
   overflow: auto;
   padding: 1.5rem;
   border-radius: 1rem;
-  border: 2px solid #007f5f;
-  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  border: 2px solid var(--primary);
+  box-shadow: 0 20px 60px var(--shadow);
 }
 
 .admin-grid {
@@ -412,23 +464,23 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 }
 
 .admin-card {
-  border: 1px solid #d5e3dc;
+  border: 1px solid var(--border);
   border-radius: .75rem;
   padding: 1rem;
   margin: 1rem 0;
-  background: #f9fcfa;
+  background: var(--surface-soft);
   overflow-x: auto;
 }
 
 .admin-card table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: var(--surface);
 }
 
 .admin-card th,
 .admin-card td {
-  border-bottom: 1px solid #d5e3dc;
+  border-bottom: 1px solid var(--border);
   padding: .65rem;
   text-align: left;
 }
@@ -439,8 +491,8 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 }
 
 .mini-card {
-  border: 1px solid #d5e3dc;
-  background: white;
+  border: 1px solid var(--border);
+  background: var(--surface);
   border-radius: .5rem;
   padding: .75rem;
   margin-bottom: .5rem;
@@ -769,4 +821,72 @@ body {
   .qty {
     justify-content: flex-start;
   }
+}
+
+body.theme-dark .brand p,
+body.theme-dark .cart-price,
+body.theme-dark .cart-subtotal,
+body.theme-dark .totals p,
+body.theme-dark .field-help,
+body.theme-dark .auth-note,
+body.theme-dark .hint {
+  color: var(--muted);
+}
+
+body.theme-dark .drawer,
+body.theme-dark .cart-name,
+body.theme-dark .qty span {
+  color: var(--text);
+}
+
+body.theme-dark .state-message,
+body.theme-dark .totals {
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+body.theme-dark .totals h3 {
+  color: var(--text);
+}
+
+body.theme-dark .cart-thumb,
+body.theme-dark .checkbox-row .check {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+body.theme-dark .qty button,
+body.theme-dark .drawer-head button,
+body.theme-dark .modal-close,
+body.theme-dark .admin-head button,
+body.theme-dark .admin-panel button {
+  background: var(--button-soft);
+  color: var(--text);
+}
+
+body.theme-dark .btn-full,
+body.theme-dark .btn-main,
+body.theme-dark .search button,
+body.theme-dark .price-row button {
+  background: var(--primary-dark);
+  color: white;
+}
+
+body.theme-dark .modal-backdrop {
+  background: rgba(0,0,0,.68);
+}
+
+body.theme-dark .field input::placeholder,
+body.theme-dark .field textarea::placeholder,
+body.theme-dark .search input::placeholder {
+  color: #91aa9f;
+}
+
+body.theme-dark .low-stock {
+  background: #4a3f1f;
+  color: #ffe8a3;
+}
+
+body.theme-dark .no-stock {
+  background: #4a2424;
 }

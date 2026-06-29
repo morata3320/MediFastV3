@@ -24,7 +24,7 @@ function productFieldInvalid(form, field) {
   return false;
 }
 
-export function Header({ user, busqueda, setBusqueda, cart, setCartOpen, logoutUser }) {
+export function Header({ user, busqueda, setBusqueda, cart, setCartOpen, theme, toggleTheme, logoutUser }) {
   const cantidad = cart.reduce((total, item) => total + item.cantidad, 0);
   const rol = user?.role || user?.rol;
   return <>
@@ -32,7 +32,7 @@ export function Header({ user, busqueda, setBusqueda, cart, setCartOpen, logoutU
     <header className="header">
       <div className="brand"><div className="logo">M</div><div><h1>MediFast</h1><p>Farmacia online</p></div></div>
       <form className="search" onSubmit={(event) => event.preventDefault()}><label className="sr-only" htmlFor="buscar">Buscar producto</label><input id="buscar" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar producto" /><button type="submit">Buscar</button></form>
-      <button className="btn-main" onClick={() => setCartOpen(true)}>Carrito ({cantidad})</button>
+      <div className="header-actions"><button className="theme-toggle" type="button" onClick={toggleTheme} aria-pressed={theme === "dark"}>Tema: {theme === "dark" ? "Oscuro" : "Claro"}</button><button className="btn-main" onClick={() => setCartOpen(true)}>Carrito ({cantidad})</button></div>
     </header>
     <nav className="authbar" aria-label="Sesión">{user ? <><span>Sesión: <strong>{user.username}</strong> ({rol})</span><Link to="/mis-pedidos">Mis pedidos</Link>{rol === "admin" && <Link to="/admin">Administración</Link>}<button onClick={logoutUser}>Salir</button></> : <><Link to="/login">Login</Link><Link to="/login?mode=register">Registro</Link></>}</nav>
   </>;
