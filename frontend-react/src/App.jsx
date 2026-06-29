@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Navigate, Route, Routes, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
+import { AdminRoute, ProtectedRoute } from "./controlador/rutas.jsx";
 import { useMediFastController } from "./controlador/useMediFastController.js";
-import { getToken } from "./modelo/api.js";
 
 import {
   Header,
@@ -19,23 +19,6 @@ import {
 } from "./vista/Componentes.jsx";
 
 import "./styles.css";
-
-function roleOf(user) {
-  return user?.role || user?.rol;
-}
-
-function ProtectedRoute({ user, children }) {
-  const location = useLocation();
-  if (!getToken() || !user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  return children;
-}
-
-function AdminRoute({ user, children }) {
-  const location = useLocation();
-  if (!getToken() || !user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  if (roleOf(user) !== "admin") return <Navigate to="/no-autorizado" replace />;
-  return children;
-}
 
 function LoginRoute({ controller }) {
   const navigate = useNavigate();
@@ -98,7 +81,7 @@ export default function App() {
         <Route path="/checkout" element={<ProtectedRoute user={c.user}><CheckoutPage controller={c} /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute user={c.user}><AdminPage controller={c} /></AdminRoute>} />
         <Route path="/mis-pedidos" element={<ProtectedRoute user={c.user}><MisPedidosPage pedidos={c.misPedidos} cargarMisPedidos={c.cargarMisPedidos} loading={c.isSubmitting} /></ProtectedRoute>} />
-        <Route path="/no-autorizado" element={<AccessDenied />} />
+        <Route path="/no-autorizado" element={<AccessDenied user={c.user} logoutUser={() => { c.logoutUser(); navigate("/"); }} />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

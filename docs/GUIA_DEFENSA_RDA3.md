@@ -8,7 +8,7 @@ El navegador ejecuta React y solicita recursos mediante HTTP. Express recibe esa
 
 - **Modelo:** `src/modelo` centraliza API, sesión, carrito y validaciones.
 - **Vista:** `src/vista` contiene componentes React y estilos para mostrar información al usuario.
-- **Controlador:** `src/controlador/useMediFastController.js` coordina eventos, estados visuales, autorización y llamadas al modelo.
+- **Controlador:** `src/controlador/useMediFastController.js` coordina eventos, estados visuales, autorización y llamadas al modelo; `src/controlador/rutas.jsx` centraliza rutas protegidas y validación de sesión/rol.
 
 ## MVC en backend
 

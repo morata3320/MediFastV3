@@ -212,12 +212,12 @@ export function MisPedidosPage({ pedidos, cargarMisPedidos, loading }) {
   return <main className="container"><section className="admin-card"><h2>Mis pedidos</h2><p>Pedidos asociados a su usuario autenticado.</p>{loading && <p className="state-message">Cargando pedidos...</p>}{!loading && pedidos.length === 0 && <p className="state-message">Aún no tiene pedidos registrados.</p>}{pedidos.map((pedido) => <article className="mini-card" key={pedido.id}><h3>Pedido #{pedido.id}</h3><p>Fecha: {pedido.createdAt ? new Date(pedido.createdAt).toLocaleString() : "Sin fecha"}</p><p>Estado: {pedido.estadoPedido?.nombre || "Pendiente"}</p><p>Total: ${Number(pedido.total || 0).toFixed(2)}</p><p>Productos: {pedido.detalles?.reduce((total, detalle) => total + Number(detalle.cantidad || 0), 0) || 0}</p></article>)}</section></main>;
 }
 
-export function AccessDenied() {
-  return <main className="container"><section className="state-message state-error"><h2>Acceso denegado</h2><p>No tiene permisos para esta acción.</p><Link to="/">Volver al catálogo</Link></section></main>;
+export function AccessDenied({ user, logoutUser }) {
+  return <main className="container route-feedback"><section className="route-card access-denied-card"><span className="route-kicker">Acceso restringido</span><h2>Acceso denegado</h2><p>No tiene permisos para acceder a esta sección.</p><div className="route-actions"><Link className="route-button primary" to="/">Volver al catálogo</Link>{user && <button className="route-button secondary" type="button" onClick={logoutUser}>Cerrar sesión</button>}</div></section></main>;
 }
 
 export function NotFound() {
-  return <main className="container"><section className="state-message"><h2>Página no encontrada</h2><p>La ruta solicitada no existe.</p><Link to="/">Volver al catálogo</Link></section></main>;
+  return <main className="container route-feedback"><section className="route-card"><span className="route-kicker">Ruta no encontrada</span><h2>Página no encontrada</h2><p>La sección solicitada no existe.</p><div className="route-actions"><Link className="route-button primary" to="/">Volver al catálogo</Link></div></section></main>;
 }
 
 export function Toast({ message }) { return message ? <div className="toast" role="status">{message}</div> : null; }
