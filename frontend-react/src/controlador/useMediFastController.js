@@ -38,6 +38,7 @@ export function useMediFastController() {
   const [adminPedidos, setAdminPedidos] = useState([]);
   const [adminUsuarios, setAdminUsuarios] = useState([]);
   const [adminRoles, setAdminRoles] = useState([]);
+  const [misPedidos, setMisPedidos] = useState([]);
 
   const notify = useCallback((message) => {
     setToast(message);
@@ -143,11 +144,12 @@ export function useMediFastController() {
   function logoutUser() {
     logoutSession();
     setUser(null);
+    setCart([]);
     setAdminOpen(false);
     notify("Sesión cerrada.");
   }
 
-  function iniciarCheckout() {
+  function iniciarCheckout(onReady) {
     if (!cart.length) return notify("El carrito está vacío.");
     if (!getToken() || !user) {
       setCartOpen(false);
@@ -155,7 +157,8 @@ export function useMediFastController() {
       return notify("Debe iniciar sesión para comprar.");
     }
     setCartOpen(false);
-    setCheckoutOpen(true);
+    if (typeof onReady === "function") onReady();
+    else setCheckoutOpen(true);
   }
 
   async function confirmarPedido(checkout) {
@@ -176,7 +179,7 @@ export function useMediFastController() {
     }
   }
 
-  function requireAdmin() {
+  const requireAdmin = useCallback(() => {
     if (!getToken() || !user) {
       setAuthMode("login");
       setAdminOpen(false);
@@ -188,9 +191,9 @@ export function useMediFastController() {
       return false;
     }
     return true;
-  }
+  }, [notify, user]);
 
-  async function cargarAdmin() {
+  const cargarAdmin = useCallback(async () => {
     if (!requireAdmin()) return;
     setIsSubmitting(true);
     try {
@@ -206,7 +209,7 @@ export function useMediFastController() {
     } finally {
       setIsSubmitting(false);
     }
-  }
+  }, [handleApiError, requireAdmin]);
 
   async function guardarProductoAdmin(producto) {
     if (!requireAdmin()) return false;
@@ -266,12 +269,29 @@ export function useMediFastController() {
     }
   }
 
+  const cargarMisPedidos = useCallback(async () => {
+    if (!getToken() || !user) {
+      setAuthMode("login");
+      notify("Debe iniciar sesión para consultar sus pedidos.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      setMisPedidos(await pedidosApi.misPedidos());
+    } catch (error) {
+      handleApiError(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [handleApiError, notify, user]);
+
   return {
     productosFiltrados, categorias, categoria, setCategoria, busqueda, setBusqueda, cart, totals, user,
     toast, catalogLoading, catalogError, isSubmitting, cartOpen, setCartOpen, authMode, setAuthMode,
     checkoutOpen, setCheckoutOpen, adminOpen, setAdminOpen, adminProductos, adminCategorias, adminPedidos, adminUsuarios,
+    misPedidos,
     adminRoles, agregar, cambiarCantidad, quitar: (id) => setCart((items) => removeItem(items, id)),
     loginUser, registerUser, logoutUser, iniciarCheckout, confirmarPedido, cargarAdmin,
-    guardarProductoAdmin, eliminarProductoAdmin, cambiarRolUsuario, cambiarEstadoPedido, cargarProductos
+    guardarProductoAdmin, eliminarProductoAdmin, cambiarRolUsuario, cambiarEstadoPedido, cargarProductos, cargarMisPedidos
   };
 }

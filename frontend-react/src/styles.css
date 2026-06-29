@@ -107,6 +107,17 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   background: #eef7f2;
 }
 
+.authbar a {
+  display: inline-flex;
+  align-items: center;
+  border-radius: .45rem;
+  padding: .55rem .8rem;
+  background: #dfece6;
+  color: #10231c;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .container {
   width: min(1180px, 94vw);
   margin: auto;
@@ -313,6 +324,18 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .hint {
   color: #456157;
   font-size: .9rem;
+}
+
+.auth-page {
+  min-height: 55vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 0;
+}
+
+.auth-card {
+  position: static;
+  box-shadow: 0 12px 35px rgba(0,0,0,.08);
 }
 
 .toast {

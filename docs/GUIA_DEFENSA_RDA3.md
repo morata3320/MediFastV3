@@ -28,15 +28,26 @@ JWT es un token firmado que el backend entrega tras un login correcto. React lo 
 - **Autorización:** decide qué puede hacer esa persona; `requireRole("admin")` protege operaciones administrativas.
 - **Roles:** `admin` administra productos, usuarios y todos los pedidos; `user` compra y consulta sus propios pedidos.
 
+## Rutas protegidas
+
+React Router protege la navegación visible:
+
+- `/checkout` y `/mis-pedidos` requieren sesión.
+- `/admin` requiere rol `admin`.
+- `/no-autorizado` informa cuando un usuario autenticado no tiene permisos.
+
+Esta capa frontend no sustituye la seguridad real. Si alguien llama la API con Postman o curl, Express vuelve a validar el JWT con `requireAuth` y el rol con `requireRole("admin")`, devolviendo 401 sin token y 403 con rol insuficiente.
+
 ## Riesgos OWASP mitigados
 
 | Riesgo | Mitigación aplicada |
 | --- | --- |
-| Broken Access Control | JWT, middleware de autenticación, roles y controles visuales de React. |
-| Authentication Failures | bcrypt, expiración JWT, mensajes controlados y rate limit para login/registro. |
+| Broken Access Control | JWT, middleware de autenticación, roles, rutas protegidas en React y controles backend 401/403. |
+| Identification and Authentication Failures | bcrypt, expiración JWT, cierre de sesión ante 401, mensajes controlados y rate limit para login/registro. |
 | Injection | Prisma, express-validator y sanitización XSS. |
 | Security Misconfiguration | Helmet, CORS configurable, `.env.example`, `.gitignore` y errores sin stack en producción. |
 | Cryptographic Failures | Secretos en variables de entorno y solo últimos cuatro dígitos de tarjeta persistidos. |
+| Security Logging and Monitoring Failures | Logger básico de solicitudes y errores controlados sin exponer secretos. |
 
 ## Checkout, stock e inventario
 

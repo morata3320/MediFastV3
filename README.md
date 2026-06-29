@@ -19,6 +19,19 @@ MediFastV3 es una farmacia online construida como aplicación cliente-servidor. 
 - `vista/`: componentes visuales de catálogo, carrito, autenticación, checkout y administración.
 - `controlador/`: hook `useMediFastController`, que coordina estado, reglas de negocio de interfaz y llamadas al modelo.
 
+### Rutas protegidas en React
+
+El frontend usa React Router para navegación y protección visual:
+
+- `/`: catálogo público.
+- `/login`: login y registro.
+- `/checkout`: requiere sesión.
+- `/mis-pedidos`: requiere sesión.
+- `/admin`: requiere rol `admin`.
+- `/no-autorizado`: respuesta para usuarios autenticados sin permisos.
+
+Esta protección mejora la experiencia y evita accesos accidentales desde la interfaz. La seguridad real permanece en el backend, donde cada ruta privada valida JWT y rol.
+
 ### Backend
 
 `server/` implementa MVC:
@@ -46,11 +59,12 @@ SQL Server se accede exclusivamente mediante Prisma. El modelo incluye `Rol`, `U
 
 ## Seguridad y OWASP
 
-- **Broken Access Control:** middleware JWT y `requireRole` protegen rutas privadas y administrativas; el frontend también oculta acciones administrativas a usuarios comunes.
-- **Authentication Failures:** contraseñas con bcrypt, JWT con expiración y límite de intentos en login/registro.
+- **Broken Access Control:** middleware JWT, `requireRole`, rutas protegidas en React y respuestas 401/403 para rutas privadas y administrativas.
+- **Identification and Authentication Failures:** contraseñas con bcrypt, JWT con expiración, cierre de sesión ante 401 y límite de intentos en login/registro.
 - **Injection:** Prisma parametriza consultas; `express-validator` y sanitización XSS validan entradas.
 - **Security Misconfiguration:** Helmet, CORS por `CORS_ORIGIN`, manejo de errores sin stack en producción, `.env` ignorado por Git.
 - **Cryptographic Failures:** secretos en variables de entorno y ninguna tarjeta completa almacenada.
+- **Security Logging and Monitoring Failures:** logger básico de solicitudes y errores controlados sin exponer secretos al cliente.
 
 ## Instalación local
 
